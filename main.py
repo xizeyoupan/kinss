@@ -1,26 +1,22 @@
-from requests_futures.sessions import FuturesSession
 import json
 import os
+import re
 import sqlite3
 import threading
+import time
 from concurrent.futures import as_completed
+from urllib import parse
 
 import feedparser
-from bottle import Bottle, abort, redirect, request, response
-from bottle import run, static_file, template, PasteServer
-import re
-from urllib import parse
+import requests
+from bottle import (Bottle, PasteServer, abort, redirect, request, response,
+                    run, static_file, template)
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
-import requests
+from requests_futures.sessions import FuturesSession
 
 lock = threading.Lock()
 currentPath = os.path.dirname(os.path.realpath(__file__))
-
-
-def save(a):
-    with open('1.py', 'a+', encoding='utf8') as f:
-        f.write(str(a))
 
 
 def normalize_whitespace(text):
@@ -57,16 +53,21 @@ def extract_feed(html_content, url=''):
 
 class Kinss(object):
     def __init__(self):
-        self.get_feeds()
+        self.load_config()
         self.session = FuturesSession()
         self.check_db()
-        self.freshen_thd = threading.Thread(target=self.get_data)
-        self.freshen_thd.setDaemon(True)
-        self.freshen_thd.start()
+        self.refresh_thd = threading.Thread(target=self.refresh_data)
+        self.refresh_thd.setDaemon(True)
+        self.refresh_thd.start()
 
     def __del__(self):
         self.con.commit()
         self.con.close()
+
+    def refresh_data(self):
+        while True:
+            self.parse_and_store_data()
+            time.sleep(self.config['CACHE_EXPIRE'])
 
     def check_db(self):
         if not os.path.exists(currentPath+'/kinss.db'):
@@ -76,15 +77,15 @@ class Kinss(object):
                 self.con.execute("create table kinss \
                     (id integer primary key, \
                     feed_title varchar ,article_title varchar unique,\
-                    published_time varchar, summary varchar, \
+                    published_time INTEGER, summary varchar, \
                     link varchar, is_read INTEGER)")
         else:
             self.con = sqlite3.connect(
                 currentPath+'/kinss.db', check_same_thread=False)
 
-    def get_data(self):
+    def parse_and_store_data(self):
         with self.session as session:
-            futures = [session.get(i) for i in self.feeds]
+            futures = [session.get(i) for i in self.config['FEEDS']]
             for future in as_completed(futures):
                 resp = future.result()
                 d = feedparser.parse(resp.text)
@@ -92,8 +93,6 @@ class Kinss(object):
                 lock.acquire()
                 data = []
                 for i in d['entries']:
-                    # save(i)
-
                     article_title = i['title']
                     if self.check_article(article_title):
                         continue
@@ -111,10 +110,18 @@ class Kinss(object):
                     article_content = normalize_whitespace(article_content)
                     article_content = extract_feed(article_content, link)
 
+                    try:
+                        published_parsed = int(
+                            time.mktime(i['published_parsed']))
+                    except (KeyError, TypeError):
+                        published_parsed = int(time.time())
+
                     t = (d.feed.title, article_title,
-                         i['published'], article_content, link, 0)
+                         published_parsed,
+                         article_content, link, 0)
 
                     data.append(t)
+
                 try:
                     with self.con:
                         self.con.executemany("insert into kinss\
@@ -126,25 +133,19 @@ class Kinss(object):
                 finally:
                     lock.release()
 
-    def get_feeds(self):
+    def load_config(self):
         with open(currentPath+'/config.json', 'r', encoding='utf') as f:
-            self.feeds = json.load(f)['FEEDS']  # self.feeds->list
+            self.config = json.load(f)  # self.config->dict
 
     def check_article(self, article_title):
         res = self.con.execute(
-            "select * from kinss where article_title = (?)", (article_title,))
+            "select * from kinss where article_title = ?", (article_title,))
         for i in res:
-            return True  # Title exists
+            return True  # Article exists
         return False
 
     def read(self):
-        data = []
-        lock.acquire()
-        for row in self.con.execute('SELECT id, feed_title, article_title, published_time,\
-                                is_read from kinss'):
-            data.append(row)
-        lock.release()
-        return template(currentPath+'/static/read.tpl', data=data)
+        return template(currentPath+'/static/read.tpl')
 
     def get_static(self, filename):
         return static_file(filename, root=currentPath+'/static/')
@@ -152,14 +153,89 @@ class Kinss(object):
     def home(self):
         redirect('/read')
 
-    def get_article(self, idx):
+    def get_article(self):
+        idx = request.query.id
+        response.content_type = 'application/json'
+
         lock.acquire()
-        for row in self.con.execute('SELECT summary from kinss \
-                                    where id = (?)', (idx,)):
+        for row in self.con.execute('SELECT * from kinss \
+                                    where id = ?', (idx,)):
             lock.release()
-            return row
+            return json.dumps({'state': 'success', 'detail': row},
+                              ensure_ascii=False)
         lock.release()
-        abort(404, 'not found')
+        return {'state': 'error', 'detail': 'article not found'}
+
+    def get_article_list_from_category(self):
+        category = request.query.category  # 2:all,1:read,or 0:unread
+        sort = request.query.sort  # asc or desc
+        response.content_type = 'application/json'
+        if not category:
+            category = '2'
+        if not sort:
+            sort = 'desc'
+        data = []
+
+        lock.acquire()
+        if category == '2':
+            for row in self.con.execute('SELECT id, feed_title, article_title, published_time,\
+                                        is_read from kinss ORDER \
+                                        BY published_time {}'.format(sort)):
+                data.append(row)
+        else:
+            for row in self.con.execute('SELECT id, feed_title, article_title, published_time,\
+                                        is_read from kinss \
+                                        where is_read =? order by \
+                                        published_time {}'.format(sort),
+                                        (category, )):
+                data.append(row)
+        lock.release()
+        return json.dumps({'state': 'success', 'list': data},
+                          ensure_ascii=False)
+
+    def get_feed_list(self):
+        data = []
+        response.content_type = 'application/json'
+        lock.acquire()
+
+        for row in self.con.execute('SELECT feed_title,is_read from kinss'):
+            data.append(row)
+        lock.release()
+
+        t = {i: [0, 0] for i in list(set([k[0] for k in data]))}
+        for i in data:
+            if i[1] == 0:
+                t[i[0]][0] += 1
+            elif i[1] == 1:
+                t[i[0]][1] += 1
+        data = []
+        for key, value in t.items():
+            data.append({'title': key, 'read': value[1], 'unread': value[0]})
+
+        return json.dumps({'state': 'success', 'feed': data},
+                          ensure_ascii=False)
+
+    def get_article_list_from_feed(self):
+        feed = request.query.feed  # 2:all,1:read,or 0:unread
+        sort = request.query.sort  # asc or desc
+        response.content_type = 'application/json'
+        if not feed:
+            return {'state': 'error'}
+        if not sort:
+            sort = 'desc'
+        data = []
+
+        lock.acquire()
+        for row in self.con.execute('SELECT id, feed_title, article_title, published_time,\
+                                    is_read from kinss where feed_title =?\
+                                    order by \
+                                    published_time {}'.format(sort),
+                                    (feed,)):
+            data.append(row)
+        lock.release()
+
+        return json.dumps({'state': 'success', 'list': data},
+                          ensure_ascii=False)
 
     def get_src(self):
         src = request.query.src
@@ -170,7 +246,29 @@ class Kinss(object):
             response.set_header('Content-Type', r.headers['Content-Type'])
             return r.content
         else:
-            abort()
+            abort(text=str(r.status_code))
+
+    def mark_as_read(self):
+        idx = request.query.id
+        read_state = request.query.read_state
+
+        if not read_state:
+            read_state = 1
+        try:
+            int(idx)
+        except ValueError:
+            return {'state': 'error', 'detail': 'ValueError'}
+
+        lock.acquire()
+        self.con.execute("UPDATE kinss set is_read = ? where id=?",
+                         (read_state, idx))
+        self.con.commit()
+        lock.release()
+
+        if self.con.total_changes:
+            return {'state': 'success'}
+        else:
+            return {'state': 'error', 'detail': 'nothing has been changed'}
 
 
 if __name__ == '__main__':
@@ -181,8 +279,12 @@ if __name__ == '__main__':
             '/read': kinss.read,
             '/static/<filename>': kinss.get_static,
             '/': kinss.home,
-            '/article/<idx>': kinss.get_article,
-            '/src/': kinss.get_src
+            '/src/': kinss.get_src,
+            '/api/category': kinss.get_article_list_from_category,
+            '/api/feed': kinss.get_article_list_from_feed,
+            '/api/article': kinss.get_article,
+            '/api/markread': kinss.mark_as_read,
+            '/api/feedlist': kinss.get_feed_list
         }
 
         for url in routeDict:
@@ -190,5 +292,5 @@ if __name__ == '__main__':
 
     app = Bottle()
     appRoute(app)
-    run(app, host='192.168.123.156', port=8080,
-        debug=True, reloader=True, server=PasteServer)
+    run(app, host='localhost', port=8080,
+        server=PasteServer)

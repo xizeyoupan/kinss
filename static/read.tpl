@@ -13,42 +13,46 @@
 
     <div id="wrapper">
         
-        <i id="navbtn" class="fa fa-bars fa-rotate-90"></i>&nbsp;
-        <span class="page-title">全部文章</span>
+        <i id="navbtn" class="fa fa-bars fa-rotate-90 fa-2x"></i>
+        <img class="logo" src="static/logo.png"/>
+        <a class="page-title">全部文章</a>
+        <i class="fa fa-check fa-2x mark-as-read btn"></i>
+
     </div>
 
 
         <div id="navbar">
-            <ul class="fa-ul">
-                <li class="all-articles"><i class="fa-li fa fa-book"></i> 全部文章</li>
-                <li class="read-articles"><i class="fa-li fa fa-book"></i> 已读</li>
-                <li class="unread-articles"><i class="fa-li fa fa-book"></i> 未读</li>
+            <ul class="fa-ul category">
+                <li class="all-articles btn"><i class="fa-li fa fa-book fa-fw"></i> 全部文章</li>
+                <li class="read-articles btn"><i class="fa-li fa fa-book fa-fw"></i> 已读</li>
+                <li class="unread-articles btn"><i class="fa-li fa fa-book fa-fw"></i> 未读</li>
             </ul>
 
             <hr>
+
             <ul id="folders" class="fa-ul">
-                %if data:
-                    %feed_titles=[ i[1] for i in data]
-                    %feed_titles=set(feed_titles)
-                    %for i in feed_titles:
-                        <li class="rss-item"><i class="fa-li fa fa-rss"></i>{{ i }}</li>
-                    %end
-                %end
             </ul>
+
+            <div class="nav-bottom">
+                <i class="fa fa-arrow-up fa-2x nav-bottom"></i>
+                <i class="fa fa-arrow-down fa-2x nav-bottom"></i>
+
+            </div>
+
         </div>
+
         <div id="page-wrapper">
-            %if data:
-                %for i in data:
-                    <div class="article" id="{{ i[0] }}">
-                        <p class="feed-title">{{ i[1] }}</p>
-                        <p class="article-title">{{ i[2] }}</p>
-                    </div>
-                %end
-            %end
+            <div id="page-content">
+            </div>
 
+            <div class="page-bottom">
+                <i class="fa fa-angle-double-down fa-3x page-bottom"></i>
+                <i class="fa fa-angle-double-up fa-3x page-bottom"></i>
+                
+                <i class="fa fa-arrow-up fa-3x page-bottom"></i>
+                <i class="fa fa-arrow-down fa-3x page-bottom"></i>
+            </div>
         </div>
-
-        <div id="article-wrapper"></div>
 
 
     <script src="static/custom.js"></script>

@@ -1,5 +1,6 @@
 {
     "FEEDS": [
-        "https://rsshub.app/cnbeta"
-    ]
+        "https://www.zhihu.com/rss"
+    ],
+    "CACHE_EXPIRE": 7200
 }

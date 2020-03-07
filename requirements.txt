@@ -1,0 +1,8 @@
+bottle==0.12.18
+requests==2.22.0
+requests_futures==1.0.0
+fake_useragent==0.1.11
+feedparser==5.2.1
+beautifulsoup4==4.8.2
+Paste==3.4.0
+lxml==4.5.0

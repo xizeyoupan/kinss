@@ -1,10 +1,12 @@
 body {
 	overflow: hidden;
+	font-size:100%;
 }
 
 * {
 	margin: 0;
 	padding: 0;
+	background-color: #fff;
 }
 
 html,body{
@@ -12,64 +14,110 @@ html,body{
 }
 
 #wrapper {
-    background-color:white;
+	position: fixed;
     color:black;
 	border-bottom-style: solid; 
 	border-width: 1px;
 	padding: 5px;
-	height: 20px;
+	height: 5%;
+	width: 100%;
 }
 
 #navbar {
-	position: absolute;
-    bottom: 0px;
-	top: 30px;
+	position: relative;
+	top: 7%;
 	width: 25%;
 	padding: 5px;
 	overflow-y: auto;
 	overflow-x: hidden;
 }
 
-#page-wrapper,#article-wrapper {
-	position: absolute;
-	top: 32px;
+div.nav-bottom  {
+	position: fixed;
+	bottom: 0px;
+	width: 25%;
+	text-align: center;
+	letter-spacing: 1em;
+}
+
+div.page-bottom  {
+	position: fixed;
+	bottom: 0px;
+	width: 73%;
+	text-align: center;
+	letter-spacing: 1.5em;
+}
+
+#page-content {
+	margin-bottom: 10%;
+}
+
+#page-wrapper {
+	position: fixed;
+	top: 7%;
+	border-width: 1px;
+	border-left-style: solid;
 	width: 73%;
 	right: 0px;
-	padding: 5px;
 	bottom: 0px;
 	overflow-y: auto;
 	overflow-x: hidden;
-	background-color: #fff;
+}
+
+a.page-title {
+	position: relative;
+	font-size: 1.4em;
+	margin-left: 2%;
+	max-width: 70%;
+}
+
+.mark-as-read {
+	position: relative;
+	margin-right: 3%;
+	margin-top: 10px;
+	float: right;
+}
+
+img.logo {
+	position: relative;
+	height: 80%;
+	top: 10px;
+}
+
+#navbtn {
+	position: relative;
+	padding: 5px;
+	margin-left: 2%;
 }
 
 ul li {
-	padding: 1px;
+	padding: 5px;
 	font-weight: 500;
-	font-size: 14px;
-}
-
-#article-wrapper {
-	display: none;
-}
-
-div.article {
-	border-bottom-style: solid;
-	border-width: 1px;
-	padding-top: 2px;
-	padding-bottom: 10px;
-	border-color: gray;
-}
-
-p.feed-title {
-	font-size: 12px;
-	font-weight: 500;
-}
-
-p.article-title {
-	font-weight: 600;
-	font-size: 14px;
+	font-size: 1.2em;
 }
 
 img {
 	max-width: 90%;
+}
+
+div.article-list {
+	margin: 10px;
+	border-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: gray;
+}
+
+p.feed-title {
+	font-size: 1em;
+	font-weight: 500;
+}
+
+p.article-title {
+	font-size: 1.2em;
+	font-weight: 600;
+	margin: 5px;
+}
+
+li.feed-list {
+	margin: 5px;
 }
