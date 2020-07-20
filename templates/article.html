@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Kinss{% endblock %}
+
+{% block body %}
+
+<body>
+    <div id="wrapper">
+
+        <i id="navbtn" class="fa fa-bars fa-rotate-90 fa-2x"></i>
+        <img class="logo" src="static/logo.png" />
+        <i class="fa fa-check fa-2x mark-as-read btn"></i>
+
+    </div>
+
+
+    <div id="navbar">
+        <ul class="fa-ul category">
+            <li class="all-articles btn"><i class="fa-li fa fa-book fa-fw"></i> 全部文章</li>
+            <li class="read-articles btn"><i class="fa-li fa fa-book fa-fw"></i> 已读</li>
+            <li class="unread-articles btn"><i class="fa-li fa fa-book fa-fw"></i> 未读</li>
+        </ul>
+
+        <hr>
+
+        <ul id="folders" class="fa-ul">
+        </ul>
+
+        <div class="nav-bottom">
+            <i class="fa fa-arrow-up fa-2x nav-bottom"></i>
+            <i class="fa fa-arrow-down fa-2x nav-bottom"></i>
+
+        </div>
+
+    </div>
+
+    <div id="page-wrapper">
+        <div id="page-content">
+        </div>
+
+        <div class="page-bottom">
+            <i class="fa fa-angle-double-down fa-3x page-bottom"></i>
+            <i class="fa fa-angle-double-up fa-3x page-bottom"></i>
+
+            <i class="fa fa-arrow-up fa-3x page-bottom"></i>
+            <i class="fa fa-arrow-down fa-3x page-bottom"></i>
+        </div>
+    </div>
+
+
+    <script src="static/custom.js"></script>
+</body>
+
+{% endblock %}

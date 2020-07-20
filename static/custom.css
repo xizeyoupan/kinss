@@ -34,7 +34,7 @@ html,body{
 
 div.nav-bottom  {
 	position: fixed;
-	bottom: 0px;
+	bottom: 30px;
 	width: 25%;
 	text-align: center;
 	letter-spacing: 1em;
@@ -42,7 +42,7 @@ div.nav-bottom  {
 
 div.page-bottom  {
 	position: fixed;
-	bottom: 0px;
+	bottom: 15px;
 	width: 73%;
 	text-align: center;
 	letter-spacing: 1.5em;
@@ -76,6 +76,7 @@ a.page-title {
 	margin-right: 3%;
 	margin-top: 10px;
 	float: right;
+	visibility: hidden;
 }
 
 img.logo {
