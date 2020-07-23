@@ -1,15 +1,20 @@
-{% extends "base.html" %}
-{% block title %}Kinss{% endblock %}
-
-{% block body %}
+{% extends "base.html" %} {% block title %}Kinss{% endblock %} {% block body %}
 
 <body>
     <div id="wrapper">
-
-        <i id="navbtn" class="fa fa-bars fa-rotate-90 fa-2x"></i>
-        <img class="logo" src="static/logo.png" />
-        <i class="fa fa-check fa-2x mark-as-read btn"></i>
-
+        <ul>
+            <i id="navbtn" class="fa fa-bars fa-rotate-90 fa-2x"></i>
+            <a><img class="logo" src="static/logo.png" /></a>
+            <div>
+                <i class="fa fa-star-o fa-2x"></i>
+                <!-- <i class="fa fa-star fa-2x"></i> -->
+                <i class="fa fa-square-o fa-2x"></i>
+                <!-- fa-check-square-o -->
+                <i class="fa fa-qrcode fa-2x"></i>
+                <i class="fa fa-refresh fa-2x"></i>
+                <a href="/setting"><i class="fa fa-cogs fa-2x"></i></a>
+            </div>
+        </ul>
     </div>
 
 
@@ -18,6 +23,7 @@
             <li class="all-articles btn"><i class="fa-li fa fa-book fa-fw"></i> 全部文章</li>
             <li class="read-articles btn"><i class="fa-li fa fa-book fa-fw"></i> 已读</li>
             <li class="unread-articles btn"><i class="fa-li fa fa-book fa-fw"></i> 未读</li>
+            <li class="starred-articles btn"><i class="fa-li fa fa-book fa-fw"></i> Starred</li>
         </ul>
 
         <hr>
