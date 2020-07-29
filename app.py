@@ -113,11 +113,15 @@ def api():
                 myQuery = (where('feedurl') == url) & (
                     where('owner') == username) & (where('is_read') == False)
         elif r_type == 'all':
-            myQuery = (where('owner') == username) & (
-                where('is_read') == False)
+            myQuery = (where('owner') == username)
         elif r_type == '':
             pass
         artilce_list = feed.search(myQuery)
+        for i in artilce_list:  # 删除文章内容
+            try:
+                del i['summary']
+            except KeyError:
+                continue
         return jsonify({"state": "success", "data": artilce_list})
 
 
@@ -181,7 +185,8 @@ def loginCheck():
         time_stamp = user_account['time_stamp']
         res = make_response(redirect('/article'))
         res.set_cookie('username', name, max_age=3600 * 24 * 3)
-        res.set_cookie('key', get_key(name, time_stamp), max_age=3600 * 24 * 3)
+        res.set_cookie('key', get_key(name, time_stamp),
+                       max_age=3600 * 24 * 3)
 
         User_now = name
         expires = user_account.get('expires')
