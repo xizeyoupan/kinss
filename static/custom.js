@@ -156,4 +156,68 @@
 //     $("li.all-articles.btn").click();
 // })
 
-$()
+// $(function({
+// $("i.fa-refresh").click(function() {
+//     $.ajax({
+//         url: "/api?action=refresh",
+//         success: function(result) {
+//             if (result['state'] === 'success') {
+//                 $("i.mark-as-read.btn").hide();
+//             }
+//         }
+//     })
+// }))
+
+$(function () {
+    // 立刻刷新rss
+    $("i.fa-refresh").click(function () {
+        // result = get_data("/api?action=refresh");
+        // if (result['state'] === 'success') {
+        //     alert("正在抓取，请在几秒后刷新。");
+        // };
+        $.getJSON("/api?action=refresh", function (result) {
+            if (result['state'] === 'success') {
+                alert("正在抓取，请在几秒后刷新。");
+            };
+        });
+    });
+
+    if (location.pathname === "/article") {
+        // alert()
+    } else {
+
+    };
+
+    $('#navbar').on('click', 'li', function () { //监听每个rss源的点击
+        show_article_list(this)
+    });
+
+
+});
+
+
+function show_article_list(obj) {
+    if ($(obj).attr('class').indexOf("btn") != -1) { //上面四个大类
+        var url = $(obj).attr('eachurl')
+    } else if ($(obj).attr('class').indexOf("each-feed") != -1) { //每个Feed源
+        var url = "/api?action=getlist&type=each&url=" + encodeURIComponent($(obj).attr('eachurl'))
+    } else {
+    };
+
+    $.getJSON(url, function (result) {
+        if (result['state'] === 'success') {
+            var html = '<ul>';
+            for (var i in result["data"]) {
+                var li = '<li>\
+                <p class="feed-title">'+ result["data"][i].feed_title + '</p>\
+                <p class="article-title">'+ result["data"][i].article_title + '</p>\
+                </li>';
+                html += li;
+            }
+            html += "</ul>"
+            $("#page-content").html(html);
+        };
+    });
+
+
+}

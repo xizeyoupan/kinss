@@ -17,40 +17,59 @@
         </ul>
     </div>
 
+    <div>
+        <div id="navbar">
+            <ul class="fa-ul category">
+                <li eachurl="/api?action=getlist&type=all" class="all btn"><i class="fa-li fa fa-book fa-fw"></i> 全部文章
+                </li>
+                <li eachurl="/api?action=getlist&type=read" class="read btn"><i class="fa-li fa fa-book fa-fw"></i> 已读
+                </li>
+                <li eachurl="/api?action=getlist&type=unread" class="unread btn"><i class="fa-li fa fa-book fa-fw"></i>
+                    未读
+                </li>
+                <li eachurl="/api?action=getlist&type=starred" class="starred btn"><i
+                        class="fa-li fa fa-book fa-fw"></i>
+                    Starred</li>
+            </ul>
 
-    <div id="navbar">
-        <ul class="fa-ul category">
-            <li class="all-articles btn"><i class="fa-li fa fa-book fa-fw"></i> 全部文章</li>
-            <li class="read-articles btn"><i class="fa-li fa fa-book fa-fw"></i> 已读</li>
-            <li class="unread-articles btn"><i class="fa-li fa fa-book fa-fw"></i> 未读</li>
-            <li class="starred-articles btn"><i class="fa-li fa fa-book fa-fw"></i> Starred</li>
-        </ul>
+            <hr>
 
-        <hr>
+            <ul id="folders" class="fa-ul">
+                {% if rss_dict %}
+                {% for category, rss_list in rss_dict.items() %}
+                {% if category=='Default' %}
+                {% for i in rss_list %}
+                <li class="each-feed" eachurl="{{ i['url'] }}"><i class="fa-li fa fa-rss fa-fw"></i>{{ i['title'] }}
+                </li>
+                {% endfor %}
+                {% else %}
+                {% endif %}
+                {% endfor %}
+                {% endif %}
+            </ul>
 
-        <ul id="folders" class="fa-ul">
-        </ul>
+            <div class="nav-bottom">
+                <i class="fa fa-arrow-up fa-2x nav-bottom"></i>
+                <i class="fa fa-arrow-down fa-2x nav-bottom"></i>
 
-        <div class="nav-bottom">
-            <i class="fa fa-arrow-up fa-2x nav-bottom"></i>
-            <i class="fa fa-arrow-down fa-2x nav-bottom"></i>
+            </div>
 
         </div>
 
+        <div id="page-wrapper">
+            <div id="page-content">
+            </div>
+
+            <div class="page-bottom">
+                <i class="fa fa-angle-double-down fa-3x page-bottom"></i>
+                <i class="fa fa-angle-double-up fa-3x page-bottom"></i>
+
+                <i class="fa fa-arrow-up fa-3x page-bottom"></i>
+                <i class="fa fa-arrow-down fa-3x page-bottom"></i>
+            </div>
+        </div>
     </div>
 
-    <div id="page-wrapper">
-        <div id="page-content">
-        </div>
-
-        <div class="page-bottom">
-            <i class="fa fa-angle-double-down fa-3x page-bottom"></i>
-            <i class="fa fa-angle-double-up fa-3x page-bottom"></i>
-
-            <i class="fa fa-arrow-up fa-3x page-bottom"></i>
-            <i class="fa fa-arrow-down fa-3x page-bottom"></i>
-        </div>
-    </div>
 
 
     <script src="static/custom.js"></script>

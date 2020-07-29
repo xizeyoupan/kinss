@@ -1,10 +1,12 @@
-import datetime
 import re
 import time
 from urllib import parse
 
 import feedparser
 from bs4 import BeautifulSoup
+from gevent import monkey
+from gevent.pywsgi import WSGIServer
+monkey.patch_all()
 
 
 def normalize_whitespace(text):
@@ -33,13 +35,13 @@ def extract_feed(html_content, url=''):
             del i['width']
 
         i['src'] = '/src/?src=' + \
-            parse.quote(i['src']) + '&url='+parse.quote(url)
+            parse.quote(i['src']) + '&url=' + parse.quote(url)
 
     res = [str(i) for i in soup.body.contents]
     return ''.join(res).replace('\xa0', '').strip()
 
 
-def parse_single_feed(html_text, category, username):
+def parse_single_feed(html_text, category, username, feed_url):
     d = feedparser.parse(html_text)
 
     each_rss_list = []
@@ -66,13 +68,19 @@ def parse_single_feed(html_text, category, username):
 
         '''
         rss_dict:{feed_title:str,article_title:str,published_time:int,summary:str,
-                link:str, is_read:bool,is_star:bool,category:str,owner:username}
+                link:str, is_read:bool,is_star:bool,category:str,owner:str,feedurl:str}
         '''
 
         t = {'feed_title': d.feed.title, 'article_title': article_title,
-             'published_time': published_parsed,
+             'published_time': published_parsed, 'feedurl': feed_url,
              'summary': article_content, 'link': link, 'is_read': False,
              'is_star': False, 'category': category, 'owner': username}
 
         each_rss_list.append(t)
     return each_rss_list
+
+
+def parse_single_feed_title(html) -> str:
+    d = feedparser.parse(html)
+    t = d.feed.title
+    return t

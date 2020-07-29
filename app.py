@@ -1,3 +1,5 @@
+from utils import WSGIServer, parse_single_feed, parse_single_feed_title
+
 import hashlib
 import os
 import time
@@ -5,13 +7,7 @@ import time
 import httpx
 from flask import (Flask, jsonify, make_response, redirect, render_template,
                    request)
-# from gevent import monkey
-# from gevent.pywsgi import WSGIServer
-from tinydb import Query, TinyDB
-
-from utils import parse_single_feed
-
-# monkey.patch_all()
+from tinydb import Query, TinyDB, where
 
 
 currentPath = os.path.dirname(os.path.realpath(__file__))
@@ -35,6 +31,8 @@ def store_rss_in_db(rss_list: list):
 
 def get_rss_content(client, url):
     r = client.get(url)
+    if r.status_code != httpx.codes.OK:
+        r.raise_for_status()
     return r.text
 
 
@@ -46,15 +44,23 @@ def gather_rss():
     with httpx.Client() as client:
 
         feed_all_lsit = []
-
-        for key, vaule in user.search(User.name == username)[0]['rss'].items():
-            for i in vaule:
+        rss_dict = user.search(User.name == username)[
+            0].get('rss')  # {'category':[{},]}
+        if not rss_dict:
+            return
+        print(rss_dict)
+        for key, value in rss_dict.items():
+            for i in value:  # i:dict={'url':''}
                 try:
-                    r = get_rss_content(client, i)
+                    r = get_rss_content(client, i['url'])
                 except Exception as e:
                     print(e)
                     continue
-                feed_all_lsit.extend(parse_single_feed(r, key, username))
+                i['title'] = parse_single_feed_title(r)
+                feed_all_lsit.extend(parse_single_feed(
+                    r, key, username, i['url']))
+
+            user.update({'rss': rss_dict}, User.name == username)  # 添加feed标题
         store_rss_in_db(feed_all_lsit)
         print('over')
 
@@ -77,51 +83,74 @@ def check_user_status(username, key):
 def get_key(username: str, time_stamp: int) -> str:
     md5 = hashlib.md5(username.encode(encoding='UTF-8')).hexdigest()
     sha = hashlib.sha256(str(time_stamp).encode(encoding='UTF-8')).hexdigest()
-    return md5+sha
+    return md5 + sha
 
 
 @app.route('/api')
 def api():
+    global User_now
     username = request.cookies.get('username')
     key = request.cookies.get('key')
 
     if not check_user_status(username, key):
         return 'Permission denied.'
 
-    all_action = ['refresh']
+    all_action = ['refresh', 'getlist']
     action = request.args.get("action")
     if action not in all_action:
         return jsonify({"state": "error", "info": 'invalid param.'})
 
+    if action == 'refresh':  # 一次性任务
+        User_now = username
+        scheduler.add_job(gather_rss)
+        scheduler.resume()
+        return jsonify({"state": "success", "info": 'Refreshing.'})
+    elif action == 'getlist':
+        r_type = request.args.get("type")
+        if r_type == 'each':
+            url = request.args.get("url")
+            if url:
+                myQuery = (where('feedurl') == url) & (
+                    where('owner') == username) & (where('is_read') == False)
+        elif r_type == 'all':
+            myQuery = (where('owner') == username) & (
+                where('is_read') == False)
+        elif r_type == '':
+            pass
+        artilce_list = feed.search(myQuery)
+        return jsonify({"state": "success", "data": artilce_list})
 
-@app.route('/')
+
+@ app.route('/')
 def hello_world():
     return ('<a href=/login>login</a><hr><a href=/register>register</a>')
 
 
-@app.route('/article')
-def get_db_data(article_data: dict = None):
+@ app.route('/article')
+def get_db_data():
     username = request.cookies.get('username')
     key = request.cookies.get('key')
 
     if check_user_status(username, key):
-        return render_template('article.html', article_data=article_data)
+        rss_dict = user.search(User.name == username)[
+            0].get('rss')  # {'category':[{},]}
+        return render_template('article.html', rss_dict=rss_dict)
     else:
         return 'Permission denied.'
 
 
-@app.route('/login')
+@ app.route('/login')
 def login():
     return render_template('login.html', title='login', action='/loginCheck')
 
 
-@app.route('/register')
+@ app.route('/register')
 def register():
     return render_template('login.html', title='register',
                            action='/registerCheck')
 
 
-@app.route('/registerCheck')
+@ app.route('/registerCheck')
 def registerCheck():
     name = request.args.get('name')
     psd = request.args.get('psd')
@@ -136,7 +165,7 @@ def registerCheck():
         return 'success.click <a href=/login>here</a> to login.'
 
 
-@app.route('/loginCheck')
+@ app.route('/loginCheck')
 def loginCheck():
     global User_now
     # TODO:delete cookie
@@ -151,8 +180,8 @@ def loginCheck():
     if psd == user_account['psd']:
         time_stamp = user_account['time_stamp']
         res = make_response(redirect('/article'))
-        res.set_cookie('username', name, max_age=3600*24*3)
-        res.set_cookie('key', get_key(name, time_stamp), max_age=3600*24*3)
+        res.set_cookie('username', name, max_age=3600 * 24 * 3)
+        res.set_cookie('key', get_key(name, time_stamp), max_age=3600 * 24 * 3)
 
         User_now = name
         expires = user_account.get('expires')
@@ -166,7 +195,7 @@ def loginCheck():
         return 'password error.'
 
 
-@app.route('/setting', methods=['GET', 'POST'])
+@ app.route('/setting', methods=['GET', 'POST'])
 def setting():
     username = request.cookies.get('username')
     key = request.cookies.get('key')
@@ -185,10 +214,10 @@ def setting():
             return 'invalid expires'
         rss = files.readlines()
         # TODO :categorize
-        # {'name':username,'rss':{'category1':['url1','url2'],
-        # 'category2':['url1','url2'],}}
-        rss_dict = {'Default': [i.decode().replace('\n', '').replace('\r', '')
-                                for i in rss]}
+        # {'name':username,'rss':{'category1':[{'url':'','title':''},],}}
+        rss = [i.decode().replace('\n', '').replace('\r', '')
+               for i in rss]
+        rss_dict = {'Default': [{'url': i} for i in rss]}
         user.update({'rss': rss_dict, 'expires': expires},
                     User.name == username)
 
@@ -205,11 +234,12 @@ if __name__ == "__main__":
 
     try:
         scheduler = GeventScheduler()
-        scheduler.add_job(gather_rss, id='gather_rss')
+        scheduler.add_job(gather_rss, id='gather_rss', trigger='interval',
+                          seconds=3600)
         scheduler.start(paused=True)
-        # http_server = WSGIServer(('', 5000), app)
-        # http_server.serve_forever()
-        app.run('0.0.0.0', debug=True)
+        http_server = WSGIServer(('0.0.0.0', 5000), app)
+        http_server.serve_forever()
+        # app.run('0.0.0.0', debug=True)
 
     except (KeyboardInterrupt, SystemExit):
         scheduler.shutdown()
