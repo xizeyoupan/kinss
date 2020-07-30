@@ -14,110 +14,102 @@ html,body{
 }
 
 #wrapper {
-	position: fixed;
-    color:black;
-	border-bottom-style: solid; 
-	border-width: 1px;
-	padding: 5px;
-	height: 5%;
-	width: 100%;
+	color: black;
+    border-bottom-style: solid;
+    border-width: 1px;
+    padding: 5px;
+    height: 5%;
+    min-height: 70px;
+    width: 100%;
 }
 
-#navbar {
-	position: relative;
-	top: 7%;
-	width: 25%;
-	padding: 5px;
-	overflow-y: auto;
-	overflow-x: hidden;
+img.logo {
+    position: relative;
+    max-height: 50px;
+    top: 10px;
+    margin-left: 20px;
 }
 
+#wrapper ul div {
+    float: right;
+}
+
+#wrapper ul div i {
+    margin-right: 60px;
+    margin-top: 10px;
+}
+
+#navbtn {
+    margin-left: 20px;
+}
+
+/* 侧边栏翻页按钮 */
 div.nav-bottom  {
 	position: fixed;
-	bottom: 0px;
-	width: 25%;
+	bottom: 25px;
+	width: 20%;
 	text-align: center;
-	letter-spacing: 1em;
+    letter-spacing: 1em;
+    margin-left: 20px;
 }
 
+/* 文章翻页按钮 */
 div.page-bottom  {
 	position: fixed;
-	bottom: 0px;
-	width: 73%;
+	bottom: 20px;
+	width: 70%;
 	text-align: center;
 	letter-spacing: 1.5em;
 }
 
-#page-content {
-	margin-bottom: 10%;
+
+#page-wrapper, #navbar{
+    padding-bottom: 100px;
+    max-height: 1000px;
+    float: left;
+    overflow-y: auto;
+}
+
+#navbar {
+	max-width: 25%;
 }
 
 #page-wrapper {
-	position: fixed;
-	top: 7%;
-	border-width: 1px;
-	border-left-style: solid;
-	width: 73%;
-	right: 0px;
-	bottom: 0px;
-	overflow-y: auto;
-	overflow-x: hidden;
+    max-width: 75%;
 }
 
-a.page-title {
-	position: relative;
-	font-size: 1.4em;
-	margin-left: 2%;
-	max-width: 70%;
+/* 在谷歌浏览器中隐藏滚动条 */
+#page-wrapper::-webkit-scrollbar { width: 0 !important }
+#navbar::-webkit-scrollbar { width: 0 !important }
+
+/* 侧边栏字号、间距 */
+#navbar ul li{
+    margin-top: 10px;
+    font-size: 1.2em;
+    padding: 5px;
 }
 
-.mark-as-read {
-	position: relative;
-	margin-right: 3%;
-	margin-top: 10px;
-	float: right;
-}
-
-img.logo {
-	position: relative;
-	height: 80%;
-	top: 10px;
-}
-
-#navbtn {
-	position: relative;
-	padding: 5px;
-	margin-left: 2%;
-}
-
-ul li {
-	padding: 5px;
-	font-weight: 500;
-	font-size: 1.2em;
-}
-
-img {
-	max-width: 90%;
-}
-
-div.article-list {
-	margin: 10px;
-	border-width: 1px;
-	border-bottom-style: solid;
-	border-bottom-color: gray;
-}
 
 p.feed-title {
-	font-size: 1em;
-	font-weight: 500;
+    margin: 2px;
+    font-weight: 700;
 }
 
 p.article-title {
-	font-size: 1.2em;
-	font-weight: 600;
-	margin: 5px;
+    margin-top: 5px;
+    padding-bottom: 8px;
+    font-size: 1.4em;
+    font-size: 500;
+    border-bottom: grey;
+    border-bottom-style: solid;
+    border-width: 1px;
 }
 
-li.feed-list {
-	margin: 5px;
+p img {
+    max-width: 95%;
+}
+
+#page-content p{
+    font-size: 1.1em;
+    margin: 5px;
 }

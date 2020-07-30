@@ -1,3 +1,5 @@
 __pycache__
 .vscode
-kinss.db
+venv
+db.json
+test.py
