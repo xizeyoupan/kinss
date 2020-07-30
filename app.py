@@ -95,7 +95,7 @@ def api():
     if not check_user_status(username, key):
         return 'Permission denied.'
 
-    all_action = ['refresh', 'getlist']
+    all_action = ['refresh', 'getlist', 'getarticle', 'getimg']
     action = request.args.get("action")
     if action not in all_action:
         return jsonify({"state": "error", "info": 'invalid param.'})
@@ -111,7 +111,7 @@ def api():
             url = request.args.get("url")
             if url:
                 myQuery = (where('feedurl') == url) & (
-                    where('owner') == username) & (where('is_read') == False)
+                    where('owner') == username)  # & (where('is_read') == False)
         elif r_type == 'all':
             myQuery = (where('owner') == username)
         elif r_type == '':
@@ -123,6 +123,23 @@ def api():
             except KeyError:
                 continue
         return jsonify({"state": "success", "data": artilce_list})
+    elif action == 'getarticle':
+        link = request.args.get("url")
+        if link:
+            myQuery = (where('link') == link) & (
+                where('owner') == username)
+            artilce_list = feed.search(myQuery)
+            return jsonify({"state": "success", "data": artilce_list})
+    elif action == 'getimg':
+        src = request.args.get("src")
+        headers = {}
+        r = httpx.get(src, headers=headers)
+        if r.status_code == httpx.codes.OK:
+            res = make_response(r.content)
+            res.headers['Content-Type'] = r.headers['Content-Type']
+            return res
+        else:
+            r.raise_for_status()
 
 
 @ app.route('/')

@@ -11,6 +11,12 @@ $(function () {
     $('#navbar').on('click', 'li', function () { //监听每个rss源的点击
         show_article_list(this);
         scroll_to_end($("#page-wrapper"), 'top');
+        $("#page-wrapper").css("max-width", "75%");
+    });
+
+    $('#page-content').on('click', 'li', function () { //监听每篇文章
+        $("#navbtn").click();
+        show_article_content(this);
     });
 
     //监听翻页按钮的点击
@@ -35,6 +41,7 @@ $(function () {
     $("#navbtn").click(function () {
         $(this).toggleClass("fa-rotate-90");
         $("#navbar").toggle();
+        $("#page-wrapper").css("max-width", "100%");
     });
 
     if (location.pathname === "/article") {
@@ -49,7 +56,7 @@ function show_article_list(obj) {
     if ($(obj).attr('class').indexOf("btn") != -1) { //上面四个大类
         var url = $(obj).attr('eachurl')
     } else if ($(obj).attr('class').indexOf("each-feed") != -1) { //每个Feed源
-        var url = "/api?action=getlist&type=each&url=" + encodeURIComponent($(obj).attr('eachurl'))
+        var url = "/api?action=getlist&type=each&url=" + encodeURIComponent($(obj).attr('eachurl'));
     } else {
     };
 
@@ -57,7 +64,7 @@ function show_article_list(obj) {
         if (result['state'] === 'success') {
             var html = '<ul>';
             for (var i in result["data"]) {
-                var li = '<li>\
+                var li = '<li url="' + result["data"][i].link + '">\
                 <p class="feed-title">'+ result["data"][i].feed_title + '</p>\
                 <p class="article-title">'+ result["data"][i].article_title + '</p>\
                 </li>';
@@ -65,6 +72,16 @@ function show_article_list(obj) {
             }
             html += "</ul>"
             $("#page-content").html(html);
+        };
+    });
+}
+
+
+function show_article_content(obj) {
+    var url = "/api?action=getarticle&url=" + encodeURIComponent($(obj).attr('url'));
+    $.getJSON(url, function (result) {
+        if (result['state'] === 'success') {
+            $("#page-content").html(result['data'][0]['summary']);
         };
     });
 }
