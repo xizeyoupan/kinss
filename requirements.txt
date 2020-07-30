@@ -1,0 +1,9 @@
+Flask==1.1.2
+fake_useragent==0.1.11
+gevent==20.6.2
+APScheduler==3.6.3
+httpx==0.13.3
+feedparser==5.2.1
+beautifulsoup4==4.9.1
+tinydb==4.1.1
+lxml==4.5.2

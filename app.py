@@ -3,11 +3,13 @@ from utils import WSGIServer, parse_single_feed, parse_single_feed_title
 import hashlib
 import os
 import time
+from urllib.parse import urlparse
 
 import httpx
 from flask import (Flask, jsonify, make_response, redirect, render_template,
                    request)
 from tinydb import Query, TinyDB, where
+from fake_useragent import UserAgent
 
 
 currentPath = os.path.dirname(os.path.realpath(__file__))
@@ -132,7 +134,9 @@ def api():
             return jsonify({"state": "success", "data": artilce_list})
     elif action == 'getimg':
         src = request.args.get("src")
-        headers = {}
+        url = request.args.get("url")
+        headers = {'User-Agent': UserAgent().random,
+                   'Referer': urlparse(url).netloc}
         r = httpx.get(src, headers=headers)
         if r.status_code == httpx.codes.OK:
             res = make_response(r.content)
@@ -239,7 +243,7 @@ def setting():
         # {'name':username,'rss':{'category1':[{'url':'','title':''},],}}
         rss = [i.decode().replace('\n', '').replace('\r', '')
                for i in rss]
-        rss_dict = {'Default': [{'url': i} for i in rss]}
+        rss_dict = {'Default': [{'url': i} for i in rss if i]}
         user.update({'rss': rss_dict, 'expires': expires},
                     User.name == username)
 

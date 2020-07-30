@@ -33,12 +33,12 @@ def extract_feed(html_content, url=''):
             del i['height']
         if i.get('width'):
             del i['width']
-        src = parse.quote(i['src'])
-        url = parse.quote(url)
+        src = i['src']
         if src.startswith('/'):
             t = parse.urlparse(url)
             src = t.scheme + '://' + t.netloc + src
-        i['src'] = '/api?action=getimg&src=' + src + '&url=' + url
+        i['src'] = '/api?action=getimg&src=' + \
+            parse.quote(src) + '&url=' + parse.quote(url)
 
     res = [str(i) for i in soup.body.contents]
     return ''.join(res).replace('\xa0', '').strip()

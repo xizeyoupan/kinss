@@ -11,11 +11,11 @@ $(function () {
     $('#navbar').on('click', 'li', function () { //监听每个rss源的点击
         show_article_list(this);
         scroll_to_end($("#page-wrapper"), 'top');
-        $("#page-wrapper").css("max-width", "75%");
     });
 
     $('#page-content').on('click', 'li', function () { //监听每篇文章
         $("#navbtn").click();
+        $("#page-wrapper").css("max-width", "100%");
         show_article_content(this);
     });
 
@@ -41,7 +41,13 @@ $(function () {
     $("#navbtn").click(function () {
         $(this).toggleClass("fa-rotate-90");
         $("#navbar").toggle();
-        $("#page-wrapper").css("max-width", "100%");
+
+        if ($("#page-wrapper").css("max-width") === "100%") {
+            $("#page-wrapper").css("max-width", "75%");
+        } else if ($("#page-wrapper").css("max-width") === "75%") {
+            $("#page-wrapper").css("max-width", "100%");
+        };
+
     });
 
     if (location.pathname === "/article") {

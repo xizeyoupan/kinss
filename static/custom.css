@@ -104,3 +104,12 @@ p.article-title {
     border-bottom-style: solid;
     border-width: 1px;
 }
+
+p img {
+    max-width: 95%;
+}
+
+#page-content p{
+    font-size: 1.1em;
+    margin: 5px;
+}
