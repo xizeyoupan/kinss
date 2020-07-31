@@ -1,7 +1,7 @@
 $(function () {
     // 立刻刷新rss
     $("i.fa-refresh").click(function () {
-        $.getJSON("/api?action=refresh", function (result) {
+        $.getJSON("/api/refresh", function (result) {
             if (result['state'] === 'success') {
                 alert("正在抓取，请在几秒后刷新。");
             };
@@ -62,7 +62,7 @@ function show_article_list(obj) {
     if ($(obj).attr('class').indexOf("btn") != -1) { //上面四个大类
         var url = $(obj).attr('eachurl')
     } else if ($(obj).attr('class').indexOf("each-feed") != -1) { //每个Feed源
-        var url = "/api?action=getlist&type=each&url=" + encodeURIComponent($(obj).attr('eachurl'));
+        var url = "/api/article-list?type=each&url=" + encodeURIComponent($(obj).attr('eachurl'));
     } else {
     };
 
@@ -84,7 +84,7 @@ function show_article_list(obj) {
 
 
 function show_article_content(obj) {
-    var url = "/api?action=getarticle&url=" + encodeURIComponent($(obj).attr('url'));
+    var url = "/api/article?url=" + encodeURIComponent($(obj).attr('url'));
     $.getJSON(url, function (result) {
         if (result['state'] === 'success') {
             $("#page-content").html(result['data'][0]['summary']);

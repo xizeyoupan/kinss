@@ -3,10 +3,8 @@ import time
 from urllib import parse
 
 import feedparser
+import httpx
 from bs4 import BeautifulSoup
-from gevent import monkey
-from gevent.pywsgi import WSGIServer
-monkey.patch_all()
 
 
 def normalize_whitespace(text):
@@ -37,7 +35,7 @@ def extract_feed(html_content, url=''):
         if src.startswith('/'):
             t = parse.urlparse(url)
             src = t.scheme + '://' + t.netloc + src
-        i['src'] = '/api?action=getimg&src=' + \
+        i['src'] = '/api/get-img?src=' + \
             parse.quote(src) + '&url=' + parse.quote(url)
 
     res = [str(i) for i in soup.body.contents]
@@ -87,3 +85,10 @@ def parse_single_feed_title(html) -> str:
     d = feedparser.parse(html)
     t = d.feed.title
     return t
+
+
+def get_rss_content(client, url):
+    r = client.get(url)
+    if r.status_code != httpx.codes.OK:
+        r.raise_for_status()
+    return r.text
