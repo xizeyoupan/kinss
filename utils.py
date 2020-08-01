@@ -1,10 +1,20 @@
+import io
 import re
 import time
 from urllib import parse
 
 import feedparser
 import httpx
+import qrcode
 from bs4 import BeautifulSoup
+
+
+def get_qrcode_img(content):
+    img = qrcode.make(content)
+    output = io.BytesIO()
+    img.save(output, 'JPEG', quality=70)
+    output.seek(0, 0)
+    return output
 
 
 def normalize_whitespace(text):
@@ -56,7 +66,7 @@ def parse_single_feed(html_text, category, username, feed_url):
                 content[0]['value']) > len(summary) else summary
         else:
             article_content = summary
-        link = i['link']
+        link = i['link']  # url_parsed already
 
         article_content = normalize_whitespace(article_content)
         article_content = extract_feed(article_content, link)
@@ -92,3 +102,7 @@ def get_rss_content(client, url):
     if r.status_code != httpx.codes.OK:
         r.raise_for_status()
     return r.text
+
+
+def parse_url_path(s):
+    return parse.quote(s, safe=";/?:@&=+$,%")

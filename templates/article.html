@@ -6,11 +6,11 @@
             <i id="navbtn" class="fa fa-bars fa-rotate-90 fa-2x"></i>
             <a><img class="logo" src="static/logo.png" /></a>
             <div>
-                <i class="fa fa-star-o fa-2x"></i>
+                <i class="fa fa-star-o fa-2x article star"></i>
                 <!-- <i class="fa fa-star fa-2x"></i> -->
-                <i class="fa fa-square-o fa-2x"></i>
+                <i class="fa fa-square-o fa-2x article read"></i>
                 <!-- fa-check-square-o -->
-                <i class="fa fa-qrcode fa-2x"></i>
+                <i class="fa fa-qrcode fa-2x article"></i>
                 <i class="fa fa-refresh fa-2x"></i>
                 <a href="/setting"><i class="fa fa-cogs fa-2x"></i></a>
             </div>
@@ -27,8 +27,7 @@
                 <li eachurl="/api/article-list?type=unread" class="unread btn"><i class="fa-li fa fa-book fa-fw"></i>
                     未读
                 </li>
-                <li eachurl="/api/article-list?type=starred" class="starred btn"><i
-                        class="fa-li fa fa-book fa-fw"></i>
+                <li eachurl="/api/article-list?type=starred" class="starred btn"><i class="fa-li fa fa-book fa-fw"></i>
                     Starred</li>
             </ul>
 
@@ -69,7 +68,7 @@
             </div>
         </div>
     </div>
-
+    <div id="qrcode-wrapper"><img id="qrcode"></img></div>
 
 
     <script src="static/custom.js"></script>

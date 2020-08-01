@@ -1,18 +1,24 @@
-from utils import parse_single_feed, parse_single_feed_title, get_rss_content
-import os
-from distutils.util import strtobool
-from urllib.parse import urlparse
-import httpx
-from fake_useragent import UserAgent
-from flask import (Flask, jsonify, make_response, redirect, render_template,
-                   request)
-from flask_login import LoginManager, UserMixin, current_user, login_required, login_user
-from flask_restful import Api, Resource
-from tinydb import TinyDB, where
-from werkzeug.security import check_password_hash, generate_password_hash
 from gevent import monkey
 from gevent.pywsgi import WSGIServer
 monkey.patch_all()
+
+import copy
+import os
+from distutils.util import strtobool
+from urllib.parse import urlparse
+
+import httpx
+from fake_useragent import UserAgent
+from flask import (Flask, jsonify, make_response, redirect, render_template,
+                   request, send_file)
+from flask_login import (LoginManager, UserMixin, current_user, login_required,
+                         login_user)
+from flask_restful import Api, Resource
+from tinydb import TinyDB, where
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from utils import (get_qrcode_img, get_rss_content, parse_single_feed,
+                   parse_single_feed_title, parse_url_path)
 
 
 class User(UserMixin):
@@ -46,7 +52,7 @@ class DB:
 
     def update_feed(self, feed_info: dict, username, feed_url):
         myQuery = (where('link') == feed_url) & (where('owner') == username)
-        self.user.update(feed_info, myQuery)
+        self.feed.update(feed_info, myQuery)
 
     def get_articles_from_each_rss(self, username, rss_url, sort_by=None) -> list:
         myQuery = (where('feedurl') == rss_url) & (where('owner') == username)
@@ -67,10 +73,7 @@ class DB:
         self.user.update(user_info, where('name') == username)
 
     def user_exists(self, username) -> bool:
-        if not self.user.contains(where('name') == username):
-            return False
-        else:
-            return True
+        return self.user.contains(where('name') == username)
 
     def get_user_info(self, username) -> dict:
         user = self.user.search(where('name') == username)
@@ -83,6 +86,7 @@ class Article(Resource):
     def get(self):
         url = request.args.get("url")
         if url:
+            url = parse_url_path(url)
             artilce_list = db.get_article(url, current_user.get_id())
             return jsonify({"state": "success", "data": artilce_list})
         else:
@@ -122,15 +126,18 @@ class Action(Resource):
         if action not in action_list:
             return jsonify({"state": "error", "info": 'invalid param.'})
 
+        feed_url = parse_url_path(feed_url)
         db.update_feed({action: strtobool(r_type)}, user, feed_url)
+        data = db.get_article(feed_url, user)
+        return jsonify({"state": "success", 'data': data})
 
 
 class Refresh(Resource):
     decorators = [login_required]
 
     def get(self):
-        scheduler.add_job(gather_rss, args=[current_user.get_id(), ])
-        scheduler.resume()
+        c = copy.deepcopy(current_user)
+        scheduler.add_job(gather_rss, args=[c, ])
         return jsonify({"state": "success", "info": 'Refreshing.'})
 
 
@@ -151,6 +158,15 @@ class GetImg(Resource):
             r.raise_for_status()
 
 
+class GetQrCode(Resource):
+    decorators = [login_required]
+
+    def get(self):
+        content = request.args.get("content")
+        img = get_qrcode_img(content)
+        return send_file(img, mimetype='image/jpeg')
+
+
 currentPath = os.path.dirname(os.path.realpath(__file__))
 
 app = Flask(__name__)
@@ -167,6 +183,7 @@ api.add_resource(ArticleList, '/api/article-list')
 api.add_resource(Action, '/api/action')
 api.add_resource(Refresh, '/api/refresh')
 api.add_resource(GetImg, '/api/get-img')
+api.add_resource(GetQrCode, '/api/get-qrcode')
 
 
 @login_manager.user_loader
@@ -174,14 +191,18 @@ def load_user(username):
     if db.user_exists(username):
         curr_user = User()
         curr_user.id = username
+        expires = db.get_user_info(username).get('expires')
+        if expires:
+            scheduler.reschedule_job('gather_rss', trigger='interval',
+                                     seconds=int(expires))
+        scheduler.modify_job('gather_rss', args=[curr_user, ])  # 直接改任务可海星
         return curr_user
 
 
-def gather_rss(username=None):
-    if not username:
-        print('ggg')
+def gather_rss(user: object = None):
+    if not user:
         return
-    print(username, 'ddd')
+    username = user.get_id()
 
     with httpx.Client() as client:
 
@@ -189,7 +210,6 @@ def gather_rss(username=None):
         rss_dict = db.get_user_info(username).get('rss')  # {'category':[{},]}
         if not rss_dict:
             return
-        print(rss_dict)
         for key, value in rss_dict.items():
             for i in value:  # i:dict={'url':''}
                 try:
@@ -203,7 +223,6 @@ def gather_rss(username=None):
 
             db.update_user({'rss': rss_dict}, username)  # 添加feed标题
         db.store_rss_in_db(feed_all_lsit)
-        print('over')
 
 
 @app.route('/')
@@ -213,7 +232,7 @@ def index():
 
 @app.route('/article')
 @login_required
-def get_db_data():
+def get_read_page():
     user = current_user.get_id()
     rss_dict = db.get_user_info(user).get(
         'rss')  # {'category':[{},]}
@@ -280,13 +299,19 @@ def setting():
         # {'name':username,'rss':{'category1':[{'url':'','title':''},],}}
         rss = [i.decode().replace('\n', '').replace('\r', '')
                for i in rss]
-        rss_dict = {'Default': [{'url': i} for i in rss if i]}
-        db.update_user({'rss': rss_dict, 'expires': expires},
-                       current_user.get_id())
+        if rss:
+            rss_dict = {'Default': [{'url': i} for i in rss if i]}
+            db.update_user({'rss': rss_dict, 'expires': expires},
+                           current_user.get_id())
+        else:
+            db.update_user({'expires': expires},
+                           current_user.get_id())
 
+        c = copy.deepcopy(current_user)
         scheduler.reschedule_job('gather_rss', trigger='interval',
                                  seconds=int(expires))
-        scheduler.resume()
+        scheduler.modify_job('gather_rss', args=[c, ])
+        # scheduler.add_job(gather_rss, args=[c, ])  # 立即更新
 
         return 'Update successfully.click <a href=/article>here</a> to enjoy.'
 
@@ -297,9 +322,14 @@ if __name__ == "__main__":
 
     try:
         scheduler = GeventScheduler()
+        '''
+        显（bu）然（shi）在对`gather_rss`传参时，需要对`current_user`进行拷贝。
+        鬼知道为什么？
+        算了，能用就行😂
+        '''
         scheduler.add_job(gather_rss, id='gather_rss', trigger='interval',
                           seconds=3600)
-        scheduler.start(paused=True)
+        scheduler.start()
         http_server = WSGIServer(('0.0.0.0', 5000), app)
         http_server.serve_forever()
         # app.run('0.0.0.0', debug=True)

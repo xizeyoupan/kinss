@@ -1,20 +1,21 @@
 body {
-	overflow: hidden;
-	font-size:100%;
+    overflow: hidden;
+    font-size: 100%;
 }
 
 * {
-	margin: 0;
-	padding: 0;
-	background-color: #fff;
+    margin: 0;
+    padding: 0;
+    background-color: #fff;
 }
 
-html,body{
-	height:100%;
+html,
+body {
+    height: 100%;
 }
 
 #wrapper {
-	color: black;
+    color: black;
     border-bottom-style: solid;
     border-width: 1px;
     padding: 5px;
@@ -43,27 +44,31 @@ img.logo {
     margin-left: 20px;
 }
 
+
 /* 侧边栏翻页按钮 */
-div.nav-bottom  {
-	position: fixed;
-	bottom: 25px;
-	width: 20%;
-	text-align: center;
+
+div.nav-bottom {
+    position: fixed;
+    bottom: 25px;
+    width: 20%;
+    text-align: center;
     letter-spacing: 1em;
     margin-left: 20px;
 }
 
+
 /* 文章翻页按钮 */
-div.page-bottom  {
-	position: fixed;
-	bottom: 20px;
-	width: 70%;
-	text-align: center;
-	letter-spacing: 1.5em;
+
+div.page-bottom {
+    position: fixed;
+    bottom: 20px;
+    width: 70%;
+    text-align: center;
+    letter-spacing: 1.5em;
 }
 
-
-#page-wrapper, #navbar{
+#page-wrapper,
+#navbar {
     padding-bottom: 100px;
     max-height: 1000px;
     float: left;
@@ -71,24 +76,32 @@ div.page-bottom  {
 }
 
 #navbar {
-	max-width: 25%;
+    max-width: 25%;
 }
 
 #page-wrapper {
     max-width: 75%;
 }
 
+
 /* 在谷歌浏览器中隐藏滚动条 */
-#page-wrapper::-webkit-scrollbar { width: 0 !important }
-#navbar::-webkit-scrollbar { width: 0 !important }
+
+#page-wrapper::-webkit-scrollbar {
+    width: 0 !important
+}
+
+#navbar::-webkit-scrollbar {
+    width: 0 !important
+}
+
 
 /* 侧边栏字号、间距 */
-#navbar ul li{
+
+#navbar ul li {
     margin-top: 10px;
     font-size: 1.2em;
     padding: 5px;
 }
-
 
 p.feed-title {
     margin: 2px;
@@ -109,7 +122,26 @@ p img {
     max-width: 95%;
 }
 
-#page-content p{
+#page-content p {
     font-size: 1.1em;
     margin: 5px;
+    line-height: 150%;
+}
+
+#qrcode-wrapper {
+    display: none;
+    width: 600px;
+    height: 600px;
+}
+
+#qrcode {
+    width: 500px;
+    height: 500px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-top: -250px;
+    /* 高度的一半 */
+    margin-left: -250px;
+    /* 宽度的一半 */
 }

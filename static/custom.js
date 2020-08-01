@@ -8,15 +8,30 @@ $(function () {
         });
     });
 
-    $('#navbar').on('click', 'li', function () { //监听每个rss源的点击
+    //监听每个rss源的点击
+    $('#navbar').on('click', 'li', function () {
+        $('title').html($(this).text());
         show_article_list(this);
         scroll_to_end($("#page-wrapper"), 'top');
+        // 删除文章操作按钮
+        $("i.article").css("display", "none");
     });
 
-    $('#page-content').on('click', 'li', function () { //监听每篇文章
+    //监听每篇文章
+    $('#page-content').on('click', 'li', function () {
         $("#navbtn").click();
         $("#page-wrapper").css("max-width", "100%");
+        $("i.article").css("display", "");
+
+        // 设置二维码
+        var src = "/api/get-qrcode?content=" + encodeURIComponent($(this).attr("url"));
+        $("#qrcode").attr("src", src);
         show_article_content(this);
+    });
+
+    // 监听二维码按钮
+    $('i.fa-qrcode').on('click', function () {
+        $("#qrcode-wrapper").toggle();
     });
 
     //监听翻页按钮的点击
@@ -34,8 +49,14 @@ $(function () {
     });
     $('i.top-btn').on('click', function () {
         scroll_to_end($("#page-wrapper"), 'top');
-    }); $('i.end-btn').on('click', function () {
+    });
+    $('i.end-btn').on('click', function () {
         scroll_to_end($("#page-wrapper"), 'end');
+    });
+
+    // 监听动作操作
+    $("i.article.read,i.article.star").on('click', function () {
+        change_state(this);
     });
 
     $("#navbtn").click(function () {
@@ -52,8 +73,7 @@ $(function () {
 
     if (location.pathname === "/article") {
         $("li.all.btn").click();
-    } else {
-    };
+    } else { };
 
 });
 
@@ -63,16 +83,15 @@ function show_article_list(obj) {
         var url = $(obj).attr('eachurl')
     } else if ($(obj).attr('class').indexOf("each-feed") != -1) { //每个Feed源
         var url = "/api/article-list?type=each&url=" + encodeURIComponent($(obj).attr('eachurl'));
-    } else {
-    };
+    } else { };
 
     $.getJSON(url, function (result) {
         if (result['state'] === 'success') {
             var html = '<ul>';
             for (var i in result["data"]) {
                 var li = '<li url="' + result["data"][i].link + '">\
-                <p class="feed-title">'+ result["data"][i].feed_title + '</p>\
-                <p class="article-title">'+ result["data"][i].article_title + '</p>\
+                <p class="feed-title">' + result["data"][i].feed_title + '</p>\
+                <p class="article-title">' + result["data"][i].article_title + '</p>\
                 </li>';
                 html += li;
             }
@@ -88,6 +107,14 @@ function show_article_content(obj) {
     $.getJSON(url, function (result) {
         if (result['state'] === 'success') {
             $("#page-content").html(result['data'][0]['summary']);
+            $("#page-content").attr("url", result['data'][0]['link']);
+            $('title').html(result['data'][0]['article_title']);
+
+            change_icon(result['data'][0]);
+            //点进来就算已读
+            if ($("i.article.read").hasClass("fa-square-o")) {
+                $("i.article.read").click();
+            }
         };
     });
 }
@@ -107,5 +134,44 @@ function scroll_to_end(obj, direction) {
         $(obj).scrollTop(0);
     } else if (direction === 'end') {
         $(obj).scrollTop($(obj)[0].scrollHeight);
+    };
+}
+
+function change_state(obj) {
+    var url = "/api/action?url=" + $("#page-content").attr("url");
+
+    if ($(obj).hasClass("star")) {
+        if ($(obj).hasClass("fa-star-o")) { //没加星的
+            url = url + "&action=is_star&type=1";
+        } else {
+            url = url + "&action=is_star&type=0";
+        }
+    } else if ($(obj).hasClass("read")) {
+        if ($(obj).hasClass("fa-square-o")) { //未读的
+            url = url + "&action=is_read&type=1";
+        } else {
+            url = url + "&action=is_read&type=0";
+        }
+    };
+
+    $.getJSON(url, function (result) {
+        if (result['state'] === 'success') {
+            change_icon(result['data'][0]);
+        };
+    });
+
+}
+
+function change_icon(data_obj) {
+    if (data_obj['is_star']) {
+        $("i.article.star").removeClass("fa-star-o").addClass('fa-star');
+    } else {
+        $("i.article.star").removeClass("fa-star").addClass('fa-star-o');
+    };
+
+    if (data_obj['is_read']) {
+        $("i.article.read").removeClass("fa-square-o").addClass('fa-check-square-o');
+    } else {
+        $("i.article.read").removeClass("fa-check-square-o").addClass('fa-square-o');
     };
 }
