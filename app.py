@@ -8,7 +8,6 @@ from distutils.util import strtobool
 from urllib.parse import urlparse
 
 import httpx
-from fake_useragent import UserAgent
 from flask import (Flask, jsonify, make_response, redirect, render_template,
                    request, send_file)
 from flask_login import (LoginManager, UserMixin, current_user, login_required,
@@ -147,7 +146,7 @@ class GetImg(Resource):
     def get(self):
         src = request.args.get("src")
         url = request.args.get("url")
-        headers = {'User-Agent': UserAgent().random,
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36',
                    'Referer': urlparse(url).scheme + '://' + urlparse(url).netloc}
         r = httpx.get(src, headers=headers)
         if r.status_code == httpx.codes.OK:
