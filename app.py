@@ -47,6 +47,7 @@ class DB:
             myQuery = (where('owner') == username) & (where('is_star') == True)
 
         artilce_list = self.feed.search(myQuery)
+        artilce_list = sorted(artilce_list, key=lambda x: x['published_time'], reverse=True)  # 按时间降序
         return artilce_list
 
     def update_feed(self, feed_info: dict, username, feed_url):
@@ -56,6 +57,7 @@ class DB:
     def get_articles_from_each_rss(self, username, rss_url, sort_by=None) -> list:
         myQuery = (where('feedurl') == rss_url) & (where('owner') == username)
         artilce_list = self.feed.search(myQuery)
+        artilce_list = sorted(artilce_list, key=lambda x: x['published_time'], reverse=True)  # 按时间降序
         return artilce_list
 
     def store_rss_in_db(self, rss_list: list):
@@ -84,6 +86,10 @@ class Article(Resource):
 
     def get(self):
         url = request.args.get("url")
+        if url == 'next':
+            artilce_list = db.get_article_list(current_user.get_id(), 'unread')
+            artilce_list = [artilce_list[0], ]
+            return jsonify({"state": "success", "data": artilce_list})
         if url:
             url = parse_url_path(url)
             artilce_list = db.get_article(url, current_user.get_id())

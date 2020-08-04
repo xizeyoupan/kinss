@@ -19,14 +19,7 @@ $(function () {
 
     //监听每篇文章
     $('#page-content').on('click', 'li', function () {
-        $("#navbtn").click();
-        $("#page-wrapper").css("max-width", "100%");
-        $("i.article").css("display", "");
-
-        // 设置二维码
-        var src = "/api/get-qrcode?content=" + encodeURIComponent($(this).attr("url"));
-        $("#qrcode").attr("src", src);
-        show_article_content(this);
+        show_article_content($(this).attr('url'));
     });
 
     // 监听二维码按钮
@@ -53,6 +46,9 @@ $(function () {
     $('i.end-btn').on('click', function () {
         scroll_to_end($("#page-wrapper"), 'end');
     });
+    $('i.next-btn').on('click', function () {
+        show_article_content("next");
+    });
 
     // 监听动作操作
     $("i.article.read,i.article.star").on('click', function () {
@@ -72,7 +68,7 @@ $(function () {
     });
 
     if (location.pathname === "/article") {
-        $("li.all.btn").click();
+        $("li.unread.btn").click();
     } else { };
 
 });
@@ -102,19 +98,31 @@ function show_article_list(obj) {
 }
 
 
-function show_article_content(obj) {
-    var url = "/api/article?url=" + encodeURIComponent($(obj).attr('url'));
+function show_article_content(url) {
+    var url = "/api/article?url=" + encodeURIComponent(url);
     $.getJSON(url, function (result) {
         if (result['state'] === 'success') {
             $("#page-content").html(result['data'][0]['summary']);
             $("#page-content").attr("url", result['data'][0]['link']);
             $('title').html(result['data'][0]['article_title']);
 
+            // 设置二维码
+            var link = result['data'][0]['link']
+            var src = "/api/get-qrcode?content=" + encodeURIComponent(link);
+            $("#qrcode").attr("src", src);
+
             change_icon(result['data'][0]);
             //点进来就算已读
             if ($("i.article.read").hasClass("fa-square-o")) {
                 $("i.article.read").click();
             }
+            if (url === "/api/article?url=next") {
+                return;
+            }
+            $("#navbtn").click();
+            $("#page-wrapper").css("max-width", "100%");
+            $("i.article").css("display", "");
+
         };
     });
 }

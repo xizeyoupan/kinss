@@ -19,16 +19,15 @@
 
     <div>
         <div id="navbar">
-            <ul class="fa-ul category">
-                <li eachurl="/api/article-list?type=all" class="all btn"><i class="fa-li fa fa-book fa-fw"></i> 全部文章
+            <ul class="fa-ul category">                
+                <li eachurl="/api/article-list?type=unread" class="unread btn"><i class="fa-li fa fa-book fa-fw"></i> 未读
                 </li>
                 <li eachurl="/api/article-list?type=read" class="read btn"><i class="fa-li fa fa-book fa-fw"></i> 已读
                 </li>
-                <li eachurl="/api/article-list?type=unread" class="unread btn"><i class="fa-li fa fa-book fa-fw"></i>
-                    未读
+                <li eachurl="/api/article-list?type=all" class="all btn"><i class="fa-li fa fa-book fa-fw"></i> 全部文章
                 </li>
-                <li eachurl="/api/article-list?type=starred" class="starred btn"><i class="fa-li fa fa-book fa-fw"></i>
-                    Starred</li>
+                <li eachurl="/api/article-list?type=starred" class="starred btn"><i class="fa-li fa fa-book fa-fw"></i> Starred
+                </li>
             </ul>
 
             <hr>
@@ -65,6 +64,7 @@
 
                 <i class="fa fa-arrow-up fa-3x page-btn-up"></i>
                 <i class="fa fa-arrow-down fa-3x page-btn-down"></i>
+                <i class="fa fa-arrow-right fa-3x next-btn article"></i>
             </div>
         </div>
     </div>

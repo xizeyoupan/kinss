@@ -3,7 +3,6 @@ APScheduler==3.6.3
 feedparser==5.2.1
 Werkzeug==1.0.1
 httpx==0.13.3
-fake_useragent==0.1.11
 Flask==1.1.2
 gevent==20.6.2
 qrcode==6.1
