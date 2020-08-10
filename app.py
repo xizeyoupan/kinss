@@ -16,7 +16,7 @@ monkey.patch_all()
 client = None
 currentPath = os.path.dirname(os.path.realpath(__file__))
 
-SERVER_URL = ''
+SERVER_URL = get_config(currentPath)
 
 
 class User(UserMixin):
@@ -44,21 +44,29 @@ class ArticleList(Resource):
     decorators = [login_required]
 
     def get(self):
-        user = current_user.get_id()
         r_type = request.args.get("type")
+        kwargs = {'order': 'published_at', 'direction': 'desc', 'limit': 1000}
         if r_type == 'each':
-            url = request.args.get("url")
-            if url:
-                artilce_list = db.get_articles_from_each_rss(user, url)
-        else:
-            artilce_list = db.get_article_list(user, r_type)
+            feed_id = request.args.get("feed_id")
+            entries = client.get_feed_entries(feed_id, **kwargs)
+        elif r_type == 'category':
+            category_id = request.args.get("category_id")
+            entries = client.get_entries(**kwargs)
+            entries = {'entries': [i for i in entries['entries']
+                                   if i['feed']['category']['id'] == int(category_id)]}
+            entries['total'] = len(entries['entries'])
+        elif r_type == 'read':
+            entries = client.get_entries(**kwargs, status='read')
+        elif r_type == 'unread':
+            entries = client.get_entries(**kwargs, status='unread')
+        elif r_type == 'all':
+            entries = client.get_entries(**kwargs)
+        elif r_type == 'starred':
+            entries = client.get_entries(**kwargs, starred=True)
 
-        for i in artilce_list:  # 删除文章内容
-            try:
-                del i['summary']
-            except KeyError:
-                continue
-        return jsonify({"state": "success", "data": artilce_list})
+        for i in entries['entries']:  # 删除文章内容
+            i.pop('content')
+        return jsonify({"state": "success", "data": entries})
 
 
 class Action(Resource):

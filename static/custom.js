@@ -10,7 +10,11 @@ $(function () {
 
     // 监听每个feed的点击
     $('#navbar').on('click', 'li', function () {
-        $('title').html($(this).text());
+        // 修改标题
+        $('title').html($(this).contents().filter(function (index, content) {
+            return content.nodeType === 3;
+        }).text());
+
         show_article_list(this);
         scroll_to_end($("#page-wrapper"), 'top');
         // 删除文章操作按钮
@@ -18,7 +22,7 @@ $(function () {
         // 阻止冒泡
         if ($(this).attr('class').indexOf("each-feed") != -1) {
             return false;
-        }
+        };
     });
 
     //监听每篇文章
@@ -90,6 +94,7 @@ $(function () {
 
 
 function show_article_list(obj) {
+    var flag = true;
     if ($(obj).attr('class').indexOf("btn") != -1) { //上面四个大类
         var url = $(obj).attr('eachurl')
     } else if ($(obj).attr('class').indexOf("each-feed") != -1) { //每个Feed源
@@ -101,16 +106,17 @@ function show_article_list(obj) {
         } else {
             $(obj).find(".each-feed").css("display", "none")
         };
+        flag = false;
         var url = "/api/article-list?type=category&category_id=" + $(obj).attr('category_id');
     };
-    alert(url)
+
     $.getJSON(url, function (result) {
         if (result['state'] === 'success') {
             var html = '<ul>';
-            for (var i in result["data"]) {
-                var li = '<li url="' + result["data"][i].link + '">\
-                <p class="feed-title">' + result["data"][i].feed_title + '</p>\
-                <p class="article-title">' + result["data"][i].article_title + '</p>\
+            for (var i in result["data"]["entries"]) {
+                var li = '<li entry_id="' + result["data"]["entries"][i]["id"] + '">\
+                <p class="feed-title">' + result["data"]["entries"][i]["feed"]["title"] + '</p>\
+                <p class="article-title">' + result["data"]["entries"][i]["title"] + '</p>\
                 </li>';
                 html += li;
             }
@@ -118,6 +124,10 @@ function show_article_list(obj) {
             $("#page-content").html(html);
         };
     });
+
+    if (flag) {
+        $("#navbtn").click();
+    };
 }
 
 
