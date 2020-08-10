@@ -1,84 +1,26 @@
+from utils import *
+from flask_restful import Api, Resource
+from flask_login import (LoginManager, UserMixin, current_user, login_required,
+                         login_user)
+from flask import (Flask, jsonify, make_response, redirect, render_template,
+                   request, send_file)
+import httpx
+from urllib.parse import urlparse
+from distutils.util import strtobool
+import os
+import copy
 from gevent import monkey
 from gevent.pywsgi import WSGIServer
 monkey.patch_all()
 
-import copy
-import os
-from distutils.util import strtobool
-from urllib.parse import urlparse
+client = None
+currentPath = os.path.dirname(os.path.realpath(__file__))
 
-import httpx
-from flask import (Flask, jsonify, make_response, redirect, render_template,
-                   request, send_file)
-from flask_login import (LoginManager, UserMixin, current_user, login_required,
-                         login_user)
-from flask_restful import Api, Resource
-from tinydb import TinyDB, where
-from werkzeug.security import check_password_hash, generate_password_hash
-
-from utils import (get_qrcode_img, get_rss_content, parse_single_feed,
-                   parse_single_feed_title, parse_url_path)
+SERVER_URL = ''
 
 
 class User(UserMixin):
     pass
-
-
-class DB:
-    def __init__(self):
-        self.db = TinyDB(currentPath + '/db.json')
-        self.user = self.db.table('User')
-        self.feed = self.db.table('Feed')
-
-    def get_article(self, url, username) -> list:
-        myQuery = (where('link') == url) & (where('owner') == username)
-        artilce_list = self.feed.search(myQuery)
-        return artilce_list
-
-    def get_article_list(self, username, search_type, sort_by=None) -> list:
-        if search_type == 'all':
-            myQuery = (where('owner') == username)
-        elif search_type == 'read':
-            myQuery = (where('owner') == username) & (where('is_read') == True)
-        elif search_type == 'unread':
-            myQuery = (where('owner') == username) & (
-                where('is_read') == False)
-        elif search_type == 'starred':
-            myQuery = (where('owner') == username) & (where('is_star') == True)
-
-        artilce_list = self.feed.search(myQuery)
-        artilce_list = sorted(artilce_list, key=lambda x: x['published_time'], reverse=True)  # 按时间降序
-        return artilce_list
-
-    def update_feed(self, feed_info: dict, username, feed_url):
-        myQuery = (where('link') == feed_url) & (where('owner') == username)
-        self.feed.update(feed_info, myQuery)
-
-    def get_articles_from_each_rss(self, username, rss_url, sort_by=None) -> list:
-        myQuery = (where('feedurl') == rss_url) & (where('owner') == username)
-        artilce_list = self.feed.search(myQuery)
-        artilce_list = sorted(artilce_list, key=lambda x: x['published_time'], reverse=True)  # 按时间降序
-        return artilce_list
-
-    def store_rss_in_db(self, rss_list: list):
-        result = []
-        for i in rss_list:
-            if not self.feed.contains((where('link') == i['link']) & (where('owner') == i['owner'])):
-                result.append(i)
-        self.feed.insert_multiple(result)
-
-    def register_user(self, username, psd):
-        self.user.insert({'name': username, 'password': psd})
-
-    def update_user(self, user_info: dict, username):
-        self.user.update(user_info, where('name') == username)
-
-    def user_exists(self, username) -> bool:
-        return self.user.contains(where('name') == username)
-
-    def get_user_info(self, username) -> dict:
-        user = self.user.search(where('name') == username)
-        return user[0]
 
 
 class Article(Resource):
@@ -172,12 +114,23 @@ class GetQrCode(Resource):
         return send_file(img, mimetype='image/jpeg')
 
 
-currentPath = os.path.dirname(os.path.realpath(__file__))
+class GetCategories(Resource):
+    decorators = [login_required]
+
+    def get(self):
+        return client.get_categories()
+
+
+class GetFeeds(Resource):
+    decorators = [login_required]
+
+    def get(self):
+        return client.get_feeds()
+
 
 app = Flask(__name__)
 app.secret_key = 'whatIsSecret_key?'
 api = Api(app)
-db = DB()
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Unauthorized User'
@@ -189,63 +142,36 @@ api.add_resource(Action, '/api/action')
 api.add_resource(Refresh, '/api/refresh')
 api.add_resource(GetImg, '/api/get-img')
 api.add_resource(GetQrCode, '/api/get-qrcode')
+api.add_resource(GetCategories, '/api/get-categories')
+api.add_resource(GetFeeds, '/api/get-feeds')
 
 
 @login_manager.user_loader
 def load_user(username):
-    if db.user_exists(username):
-        curr_user = User()
-        curr_user.id = username
-        expires = db.get_user_info(username).get('expires')
-        if expires:
-            scheduler.reschedule_job('gather_rss', trigger='interval',
-                                     seconds=int(expires))
-        scheduler.modify_job('gather_rss', args=[curr_user, ])  # 直接改任务可海星
-        return curr_user
-
-
-def gather_rss(user: object = None):
-    if not user:
-        return
-    username = user.get_id()
-
-    with httpx.Client() as client:
-
-        feed_all_lsit = []
-        rss_dict = db.get_user_info(username).get('rss')  # {'category':[{},]}
-        if not rss_dict:
-            return
-        for key, value in rss_dict.items():
-            for i in value:  # i:dict={'url':''}
-                try:
-                    r = get_rss_content(client, i['url'])
-                except Exception as e:
-                    print(e)
-                    continue
-                i['title'] = parse_single_feed_title(r)
-                feed_all_lsit.extend(parse_single_feed(
-                    r, key, username, i['url']))
-
-            db.update_user({'rss': rss_dict}, username)  # 添加feed标题
-        db.store_rss_in_db(feed_all_lsit)
+    curr_user = User()
+    curr_user.id = username
+    return curr_user
 
 
 @app.route('/')
 def index():
-    return ('<a href=/login>login</a><hr><a href=/register>register</a>')
+    global SERVER_URL
+    url = get_config(currentPath)
+    if not url:
+        return 'Set SERVER_URL first!<a href=/setting>setting</a>'
+    SERVER_URL = url
+    return '<a href=/login>login</a><hr><a href=/setting>setting</a>'
 
 
 @app.route('/article')
 @login_required
 def get_read_page():
-    user = current_user.get_id()
-    rss_dict = db.get_user_info(user).get(
-        'rss')  # {'category':[{},]}
-    return render_template('article.html', rss_dict=rss_dict)
+    return render_template('article.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    global client
     if request.method == 'GET':
         return render_template('login.html', title='login', action='/login')
 
@@ -255,89 +181,35 @@ def login():
         if not all([name, psd]):
             return make_response("invalid param", 400)
 
-        if not db.user_exists(name):
-            return make_response("account not exists.", 400)
+        client = get_client(SERVER_URL, name, psd)
 
-        user_account = db.get_user_info(name)
-        if not check_password_hash(user_account.get('password'), psd):
-            return make_response("password error.", 401)
-        else:
+        if client:
             curr_user = User()
             curr_user.id = name
             login_user(curr_user)
             r_next = request.args.get('next')
             return redirect(r_next or '/article')
-
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'GET':
-        return render_template('login.html', title='register', action='/register')
-
-    if request.method == 'POST':
-        name = request.form['name']
-        psd = request.form['psd']
-        if not all([name, psd]):
-            return make_response("invalid param", 400)
-
-        if db.user_exists(name):
-            return make_response("account exists.", 400)
         else:
-            db.register_user(name, generate_password_hash(psd))
-            return 'success.click <a href=/login>here</a> to login.'
+            return make_response("invalid param", 401)
 
 
 @app.route('/setting', methods=['GET', 'POST'])
-@login_required
 def setting():
     if request.method == 'GET':
-        return render_template('setting.html', title='设置')
+        return render_template('setting.html', title='设置', url=get_config(currentPath))
 
     if request.method == 'POST':
-        # TODO proxy
-        files = request.files.get('file')
-        expires = request.form['expires']
-        if not expires.isdigit():
-            return make_response('invalid expires', 400)
-        rss = files.readlines()
-        # TODO :categorize
-        # {'name':username,'rss':{'category1':[{'url':'','title':''},],}}
-        rss = [i.decode().replace('\n', '').replace('\r', '')
-               for i in rss]
-        if rss:
-            rss_dict = {'Default': [{'url': i} for i in rss if i]}
-            db.update_user({'rss': rss_dict, 'expires': expires},
-                           current_user.get_id())
+        baseurl = request.form['baseurl']
+
+        if baseurl:
+            set_config(currentPath, baseurl)
+            return 'Update successfully.click <a href=/login>here</a> to login.'
         else:
-            db.update_user({'expires': expires},
-                           current_user.get_id())
-
-        c = copy.deepcopy(current_user)
-        scheduler.reschedule_job('gather_rss', trigger='interval',
-                                 seconds=int(expires))
-        scheduler.modify_job('gather_rss', args=[c, ])
-        # scheduler.add_job(gather_rss, args=[c, ])  # 立即更新
-
-        return 'Update successfully.click <a href=/article>here</a> to enjoy.'
+            return make_response("invalid param", 400)
 
 
 if __name__ == "__main__":
     app.debug = True
-    from apscheduler.schedulers.gevent import GeventScheduler
-
-    try:
-        scheduler = GeventScheduler()
-        '''
-        显（bu）然（shi）在对`gather_rss`传参时，需要对`current_user`进行拷贝。
-        鬼知道为什么？
-        算了，能用就行😂
-        '''
-        scheduler.add_job(gather_rss, id='gather_rss', trigger='interval',
-                          seconds=3600)
-        scheduler.start()
-        http_server = WSGIServer(('0.0.0.0', 5000), app)
-        http_server.serve_forever()
-        # app.run('0.0.0.0', debug=True)
-
-    except (KeyboardInterrupt, SystemExit):
-        scheduler.shutdown()
+    http_server = WSGIServer(('0.0.0.0', 5000), app)
+    http_server.serve_forever()
+    # app.run('0.0.0.0', debug=True)

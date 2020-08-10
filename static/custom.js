@@ -8,13 +8,17 @@ $(function () {
         });
     });
 
-    //监听每个rss源的点击
+    // 监听每个feed的点击
     $('#navbar').on('click', 'li', function () {
         $('title').html($(this).text());
         show_article_list(this);
         scroll_to_end($("#page-wrapper"), 'top');
         // 删除文章操作按钮
         $("i.article").css("display", "none");
+        // 阻止冒泡
+        if ($(this).attr('class').indexOf("each-feed") != -1) {
+            return false;
+        }
     });
 
     //监听每篇文章
@@ -58,17 +62,28 @@ $(function () {
     $("#navbtn").click(function () {
         $(this).toggleClass("fa-rotate-90");
         $("#navbar").toggle();
-
-        if ($("#page-wrapper").css("max-width") === "100%") {
-            $("#page-wrapper").css("max-width", "75%");
-        } else if ($("#page-wrapper").css("max-width") === "75%") {
-            $("#page-wrapper").css("max-width", "100%");
-        };
-
     });
 
     if (location.pathname === "/article") {
-        $("li.unread.btn").click();
+        $.ajaxSettings.async = false;
+        $.getJSON("/api/get-categories", function (result) {
+            var html = "";
+            for (var i in result) {
+                html += '<li class="category" category_id="' + result[i]['id'] + '"> <i class="fa-li fa fa-folder-o fa-fw"></i>' + result[i]['title'] + '<ul class="fa-ul"></ul></li>';
+            };
+            $("#folders").html(html)
+        });
+
+        $.getJSON("/api/get-feeds", function (result) {
+            for (var i in result) {
+                var selector = "[category_id=" + result[i].category.id + "] ul";
+                var html = '<li class="each-feed" feed_id="' + result[i]['id'] + '"> <i class="fa-li fa fa-rss fa-fw"></i>' + result[i]['title'] + '</li>';
+                html += $(selector).html();
+                $(selector).html(html);
+            };
+        });
+
+        $.ajaxSettings.async = true;
     } else { };
 
 });
@@ -78,9 +93,17 @@ function show_article_list(obj) {
     if ($(obj).attr('class').indexOf("btn") != -1) { //上面四个大类
         var url = $(obj).attr('eachurl')
     } else if ($(obj).attr('class').indexOf("each-feed") != -1) { //每个Feed源
-        var url = "/api/article-list?type=each&url=" + encodeURIComponent($(obj).attr('eachurl'));
-    } else { };
-
+        var url = "/api/article-list?type=each&feed_id=" + $(obj).attr('feed_id');
+    } else if ($(obj).attr('class').indexOf("category") != -1) { //分类
+        // 显示与隐藏feeds
+        if ($(obj).find(".each-feed").css("display") == "none") {
+            $(obj).find(".each-feed").css("display", "block")
+        } else {
+            $(obj).find(".each-feed").css("display", "none")
+        };
+        var url = "/api/article-list?type=category&category_id=" + $(obj).attr('category_id');
+    };
+    alert(url)
     $.getJSON(url, function (result) {
         if (result['state'] === 'success') {
             var html = '<ul>';

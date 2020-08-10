@@ -6,6 +6,7 @@ from urllib import parse
 import feedparser
 import httpx
 import qrcode
+import miniflux
 from bs4 import BeautifulSoup
 
 
@@ -106,3 +107,26 @@ def get_rss_content(client, url):
 
 def parse_url_path(s):
     return parse.quote(s, safe=";/?:@&=+$,%")
+
+
+def get_config(path: str):
+    path = path + '/config'
+    with open(path, 'a+', encoding='utf8') as f:
+        f.seek(0)
+        return f.read()
+
+
+def get_client(server_url, username, password):
+    client = miniflux.Client(server_url, username, password)
+    try:
+        client.me()
+        return client
+    except:
+        return False
+
+
+def set_config(path, url):
+    path = path + '/config'
+    with open(path, 'w', encoding='utf8') as f:
+        f.write(url)
+
