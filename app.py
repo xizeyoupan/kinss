@@ -1,17 +1,21 @@
-from utils import *
-from flask_restful import Api, Resource
-from flask_login import (LoginManager, UserMixin, current_user, login_required,
-                         login_user)
-from flask import (Flask, jsonify, make_response, redirect, render_template,
-                   request, send_file)
-import httpx
-from urllib.parse import urlparse
-from distutils.util import strtobool
-import os
-import copy
 from gevent import monkey
 from gevent.pywsgi import WSGIServer
 monkey.patch_all()
+
+import io
+import os
+from urllib.parse import urlparse
+
+import requests
+from flask import (Flask, jsonify, make_response, redirect, render_template,
+                   request, send_file)
+from flask_login import LoginManager, UserMixin, login_required, login_user
+from flask_restful import Api, Resource
+
+
+from utils import (extract_feed, get_client, get_config, get_qrcode_img,
+                   resize_img, set_config)
+
 
 client = None
 currentPath = os.path.dirname(os.path.realpath(__file__))
@@ -27,17 +31,18 @@ class Article(Resource):
     decorators = [login_required]
 
     def get(self):
-        url = request.args.get("url")
-        if url == 'next':
-            artilce_list = db.get_article_list(current_user.get_id(), 'unread')
-            artilce_list = [artilce_list[0], ]
-            return jsonify({"state": "success", "data": artilce_list})
-        if url:
-            url = parse_url_path(url)
-            artilce_list = db.get_article(url, current_user.get_id())
-            return jsonify({"state": "success", "data": artilce_list})
+        entry_id = request.args.get("entry_id")
+        if entry_id == 'next':
+            entries = client.get_entries(status='unread', direction='desc')
+            if not entries['entries']:  # 没有未读
+                return jsonify({"state": "error", "info": 'all entries have been read.'})
+            entry = entries['entries'][0]
+
         else:
-            return jsonify({"state": "error", "info": 'invalid param.'})
+            entry = client.get_entry(int(entry_id))
+
+        entry['content'] = extract_feed(entry['content'], entry['url'])
+        return jsonify({"state": "success", "data": entry})
 
 
 class ArticleList(Resource):
@@ -73,26 +78,24 @@ class Action(Resource):
     decorators = [login_required]
 
     def get(self):
-        user = current_user.get_id()
-        feed_url = request.args.get("url")
-        action_list = ['is_read', 'is_star']
+        entry_id = request.args.get("entry_id")
         action = request.args.get("action")
         r_type = request.args.get("type")
-        if action not in action_list:
-            return jsonify({"state": "error", "info": 'invalid param.'})
+        if action == 'is_read':
+            r_type = 'read' if r_type == '1' else 'unread'
+            client.update_entries([int(entry_id), ], r_type)
+        elif action == 'is_star':
+            client.toggle_bookmark(int(entry_id))
 
-        feed_url = parse_url_path(feed_url)
-        db.update_feed({action: strtobool(r_type)}, user, feed_url)
-        data = db.get_article(feed_url, user)
-        return jsonify({"state": "success", 'data': data})
+        entry = client.get_entry(int(entry_id))
+        return jsonify({"state": "success", 'data': entry})
 
 
 class Refresh(Resource):
     decorators = [login_required]
 
     def get(self):
-        c = copy.deepcopy(current_user)
-        scheduler.add_job(gather_rss, args=[c, ])
+        client.refresh_all_feeds()
         return jsonify({"state": "success", "info": 'Refreshing.'})
 
 
@@ -104,11 +107,14 @@ class GetImg(Resource):
         url = request.args.get("url")
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36',
                    'Referer': urlparse(url).scheme + '://' + urlparse(url).netloc}
-        r = httpx.get(src, headers=headers)
-        if r.status_code == httpx.codes.OK:
-            res = make_response(r.content)
-            res.headers['Content-Type'] = r.headers['Content-Type']
-            return res
+        r = requests.get(src, headers=headers)
+        if r.status_code == requests.codes.OK:
+            if src.split('.')[-1] == 'gif':
+                res = make_response(r.content)
+                res.headers['Content-Type'] = r.headers['Content-Type']
+                return res
+            raw = resize_img(io.BytesIO(r.content))
+            return send_file(raw, mimetype='image/jpeg')
         else:
             r.raise_for_status()
 
@@ -189,20 +195,22 @@ def login():
         if not all([name, psd]):
             return make_response("invalid param", 400)
 
-        client = get_client(SERVER_URL, name, psd)
+        try:
+            client = get_client(SERVER_URL, name, psd)
+        except Exception as e:
+            print(e)
+            return jsonify(error='error')
 
-        if client:
-            curr_user = User()
-            curr_user.id = name
-            login_user(curr_user)
-            r_next = request.args.get('next')
-            return redirect(r_next or '/article')
-        else:
-            return make_response("invalid param", 401)
+        curr_user = User()
+        curr_user.id = name
+        login_user(curr_user)
+        r_next = request.args.get('next')
+        return redirect(r_next or '/article')
 
 
 @app.route('/setting', methods=['GET', 'POST'])
 def setting():
+    global SERVER_URL
     if request.method == 'GET':
         return render_template('setting.html', title='设置', url=get_config(currentPath))
 
@@ -211,13 +219,14 @@ def setting():
 
         if baseurl:
             set_config(currentPath, baseurl)
+            SERVER_URL = baseurl
             return 'Update successfully.click <a href=/login>here</a> to login.'
         else:
             return make_response("invalid param", 400)
 
 
 if __name__ == "__main__":
-    app.debug = True
+    # app.debug = True
     http_server = WSGIServer(('0.0.0.0', 5000), app)
     http_server.serve_forever()
     # app.run('0.0.0.0', debug=True)

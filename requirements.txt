@@ -1,6 +1,4 @@
 Flask_Login==0.5.0
-feedparser==5.2.1
-httpx==0.13.3
 Flask==1.1.2
 gevent==20.6.2
 qrcode==6.1
@@ -8,3 +6,5 @@ Flask_RESTful==0.3.8
 beautifulsoup4==4.9.1
 lxml==4.5.2
 Pillow==7.2.0
+requests==2.22.0
+miniflux==0.0.11

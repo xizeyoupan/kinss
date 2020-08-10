@@ -140,15 +140,15 @@ p.article-title {
     border-width: 1px;
 }
 
-p img {
+#page-content img {
     max-width: 95%;
 }
 
-/* #page-content p {
-    font-size: 1.1em;
-    margin: 5px;
+#page-content>p {
+    font-size: 1.1rem;
+    margin: 0.5rem;
     line-height: 150%;
-} */
+}
 
 #qrcode-wrapper {
     display: none;

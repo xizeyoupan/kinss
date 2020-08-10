@@ -27,7 +27,7 @@ $(function () {
 
     //监听每篇文章
     $('#page-content').on('click', 'li', function () {
-        show_article_content($(this).attr('url'));
+        show_article_content($(this).attr('entry_id'));
     });
 
     // 监听二维码按钮
@@ -88,6 +88,8 @@ $(function () {
         });
 
         $.ajaxSettings.async = true;
+
+        $("li.unread.btn").click();
     } else { };
 
 });
@@ -131,31 +133,28 @@ function show_article_list(obj) {
 }
 
 
-function show_article_content(url) {
-    var url = "/api/article?url=" + encodeURIComponent(url);
+function show_article_content(id) {
+    var url = "/api/article?entry_id=" + id;
     $.getJSON(url, function (result) {
         if (result['state'] === 'success') {
-            $("#page-content").html(result['data'][0]['summary']);
-            $("#page-content").attr("url", result['data'][0]['link']);
-            $('title').html(result['data'][0]['article_title']);
+            $("#page-content").html(result['data']['content']);
+            $("#page-content").attr("entry_id", result['data']['id']);
+            $('title').html(result['data']['title']);
 
             // 设置二维码
-            var link = result['data'][0]['link']
+            var link = result['data']['url']
             var src = "/api/get-qrcode?content=" + encodeURIComponent(link);
             $("#qrcode").attr("src", src);
 
-            change_icon(result['data'][0]);
+            change_icon(result['data']);
             //点进来就算已读
             if ($("i.article.read").hasClass("fa-square-o")) {
                 $("i.article.read").click();
             }
-            if (url === "/api/article?url=next") {
-                return;
-            }
-            $("#navbtn").click();
-            $("#page-wrapper").css("max-width", "100%");
-            $("i.article").css("display", "");
 
+            $("i.article").css("display", "");
+        } else if (result['state'] === 'error') {
+            alert(result['info']);
         };
     });
 }
@@ -179,7 +178,7 @@ function scroll_to_end(obj, direction) {
 }
 
 function change_state(obj) {
-    var url = "/api/action?url=" + $("#page-content").attr("url");
+    var url = "/api/action?entry_id=" + $("#page-content").attr("entry_id");
 
     if ($(obj).hasClass("star")) {
         if ($(obj).hasClass("fa-star-o")) { //没加星的
@@ -197,20 +196,20 @@ function change_state(obj) {
 
     $.getJSON(url, function (result) {
         if (result['state'] === 'success') {
-            change_icon(result['data'][0]);
+            change_icon(result['data']);
         };
     });
 
 }
 
 function change_icon(data_obj) {
-    if (data_obj['is_star']) {
+    if (data_obj['starred']) {
         $("i.article.star").removeClass("fa-star-o").addClass('fa-star');
     } else {
         $("i.article.star").removeClass("fa-star").addClass('fa-star-o');
     };
 
-    if (data_obj['is_read']) {
+    if (data_obj['status'] === "read") {
         $("i.article.read").removeClass("fa-square-o").addClass('fa-check-square-o');
     } else {
         $("i.article.read").removeClass("fa-check-square-o").addClass('fa-square-o');
