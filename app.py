@@ -17,6 +17,7 @@ from utils import (extract_feed, get_client, get_config, get_qrcode_img,
                    resize_img, set_config)
 
 
+clients_pool = []
 client = None
 currentPath = os.path.dirname(os.path.realpath(__file__))
 
@@ -162,18 +163,17 @@ api.add_resource(GetFeeds, '/api/get-feeds')
 
 @login_manager.user_loader
 def load_user(username):
+    global client
     curr_user = User()
     curr_user.id = username
+    for i in clients_pool:
+        if i['id'] == username:
+            client = i['client']
     return curr_user
 
 
 @app.route('/')
 def index():
-    global SERVER_URL
-    url = get_config(currentPath)
-    if not url:
-        return 'Set SERVER_URL first!<a href=/setting>setting</a>'
-    SERVER_URL = url
     return '<a href=/login>login</a><hr><a href=/setting>setting</a>'
 
 
@@ -185,8 +185,13 @@ def get_read_page():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    global client
+    global client, SERVER_URL
+
     if request.method == 'GET':
+        url = get_config(currentPath)
+        if not url:
+            return 'Set SERVER_URL first!<a href=/setting>setting</a>'
+        SERVER_URL = url
         return render_template('login.html', title='login', action='/login')
 
     if request.method == 'POST':
@@ -205,6 +210,12 @@ def login():
         curr_user.id = name
         login_user(curr_user)
         r_next = request.args.get('next')
+        flag = True
+        for i in clients_pool:
+            if i['id'] == name:
+                flag = False
+        if flag:
+            clients_pool.append({'id': name, 'client': client})
         return redirect(r_next or '/article')
 
 
