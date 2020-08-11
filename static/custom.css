@@ -6,7 +6,7 @@ body {
 * {
     margin: 0;
     padding: 0;
-    background-color: #fff;
+    background-color: rgba(0, 0, 0, 0);
 }
 
 html,
@@ -14,21 +14,24 @@ body {
     height: 100%;
 }
 
-#wrapper {
+html {
+    font-size: 2mm;
+}
+
+#wrapper ul{
     color: black;
     border-bottom-style: solid;
-    border-width: 1px;
-    padding: 5px;
-    height: 5%;
-    min-height: 70px;
+    height: 4.5rem;
     width: 100%;
+    display: flex;
+    justify-content: space-between;
 }
 
 img.logo {
     position: relative;
-    max-height: 50px;
-    top: 10px;
-    margin-left: 20px;
+    max-height: 3rem;
+    top: 0.5rem;
+    margin-left: 2rem;
 }
 
 #wrapper ul div {
@@ -36,51 +39,69 @@ img.logo {
 }
 
 #wrapper ul div i {
-    margin-right: 60px;
-    margin-top: 10px;
+    margin-right: 1.5rem;
+    margin-top: 1rem;
 }
 
 #navbtn {
-    margin-left: 20px;
+    margin-left: 2rem;
 }
 
 
 /* 侧边栏翻页按钮 */
 
 div.nav-bottom {
+    width: 15rem;
     position: fixed;
-    bottom: 25px;
-    width: 20%;
+    bottom: 0;
     text-align: center;
-    letter-spacing: 1em;
-    margin-left: 20px;
+    height: 2.5rem;
+    margin: 0.25rem;
 }
 
+div.nav-bottom i{
+    padding-left: 2rem;
+}
+
+/* 隐藏二级菜单 */
+.each-feed {
+    display: none;
+}
 
 /* 文章翻页按钮 */
-
 div.page-bottom {
+    width: 100%;
     position: fixed;
-    bottom: 20px;
-    width: 70%;
+    bottom: 0;
     text-align: center;
-    letter-spacing: 1.5em;
+    height: 2.5rem;
+    margin: 0.25rem;
+    padding-top: 0.5rem;
+}
+
+div.page-bottom i{
+    padding-left: 2rem;
 }
 
 #page-wrapper,
 #navbar {
-    padding-bottom: 100px;
-    max-height: 1000px;
-    float: left;
+    display: flex;
+    flex-direction: column;
     overflow-y: auto;
+    top: 4.6rem;
+    bottom: 3rem;
+    position: absolute;
 }
 
 #navbar {
-    max-width: 25%;
+    width: 15rem;
+    padding-left: 1rem;
+    z-index: 999;
+    background-color: white;
 }
 
 #page-wrapper {
-    max-width: 75%;
+    width: 100%;
 }
 
 
@@ -98,33 +119,34 @@ div.page-bottom {
 /* 侧边栏字号、间距 */
 
 #navbar ul li {
-    margin-top: 10px;
-    font-size: 1.2em;
-    padding: 5px;
+    margin-top: 0.25rem;
+    font-size: 1.4rem;
+    padding: 0.2rem;
 }
 
 p.feed-title {
-    margin: 2px;
-    font-weight: 700;
+    padding: 0.2rem;
+    padding-top: 0.5rem;
+    font-weight: 600;
 }
 
 p.article-title {
-    margin-top: 5px;
-    padding-bottom: 8px;
-    font-size: 1.4em;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-size: 1.3rem;
     font-size: 500;
     border-bottom: grey;
     border-bottom-style: solid;
     border-width: 1px;
 }
 
-p img {
+#page-content img {
     max-width: 95%;
 }
 
-#page-content p {
-    font-size: 1.1em;
-    margin: 5px;
+#page-content>p {
+    font-size: 1.1rem;
+    margin: 0.5rem;
     line-height: 150%;
 }
 

@@ -1,76 +1,69 @@
 {% extends "base.html" %} {% block title %}Kinss{% endblock %} {% block body %}
 
 <body>
-    <div id="wrapper">
-        <ul>
-            <i id="navbtn" class="fa fa-bars fa-rotate-90 fa-2x"></i>
-            <a><img class="logo" src="static/logo.png" /></a>
-            <div>
-                <i class="fa fa-star-o fa-2x article star"></i>
-                <!-- <i class="fa fa-star fa-2x"></i> -->
-                <i class="fa fa-square-o fa-2x article read"></i>
-                <!-- fa-check-square-o -->
-                <i class="fa fa-qrcode fa-2x article"></i>
-                <i class="fa fa-refresh fa-2x"></i>
-                <a href="/setting"><i class="fa fa-cogs fa-2x"></i></a>
-            </div>
-        </ul>
-    </div>
-
-    <div>
-        <div id="navbar">
-            <ul class="fa-ul category">
-                <li eachurl="/api/article-list?type=all" class="all btn"><i class="fa-li fa fa-book fa-fw"></i> 全部文章
-                </li>
-                <li eachurl="/api/article-list?type=read" class="read btn"><i class="fa-li fa fa-book fa-fw"></i> 已读
-                </li>
-                <li eachurl="/api/article-list?type=unread" class="unread btn"><i class="fa-li fa fa-book fa-fw"></i>
-                    未读
-                </li>
-                <li eachurl="/api/article-list?type=starred" class="starred btn"><i class="fa-li fa fa-book fa-fw"></i>
-                    Starred</li>
+    <div id="app-root" style="display: block;visibility: visible;">
+        <div id="wrapper">
+            <ul>
+                <i id="navbtn" class="fa fa-bars fa-rotate-90 fa-2x"></i>
+                <a><img class="logo" src="static/logo.png" /></a>
+                <div>
+                    <i class="fa fa-star-o fa-2x article star"></i>
+                    <!-- <i class="fa fa-star fa-2x"></i> -->
+                    <i class="fa fa-square-o fa-2x article read"></i>
+                    <!-- fa-check-square-o -->
+                    <i class="fa fa-qrcode fa-2x article"></i>
+                    <i class="fa fa-refresh fa-2x"></i>
+                    <a href="/setting"><i class="fa fa-cogs fa-2x"></i></a>
+                </div>
             </ul>
-
-            <hr>
-
-            <ul id="folders" class="fa-ul">
-                {% if rss_dict %}
-                {% for category, rss_list in rss_dict.items() %}
-                {% if category=='Default' %}
-                {% for i in rss_list %}
-                <li class="each-feed" eachurl="{{ i['url'] }}"><i class="fa-li fa fa-rss fa-fw"></i>{{ i['title'] }}
-                </li>
-                {% endfor %}
-                {% else %}
-                {% endif %}
-                {% endfor %}
-                {% endif %}
-            </ul>
-
-            <div class="nav-bottom">
-                <i class="fa fa-arrow-up fa-2x nav-btn-up"></i>
-                <i class="fa fa-arrow-down fa-2x nav-btn-down"></i>
-
-            </div>
-
         </div>
 
-        <div id="page-wrapper">
-            <div id="page-content">
+        <div>
+            <div id="navbar">
+                <ul class="fa-ul category">
+                    <li eachurl="/api/article-list?type=unread" class="unread btn"><i
+                            class="fa-li fa fa-book fa-fw"></i> 未读
+                    </li>
+                    <li eachurl="/api/article-list?type=read" class="read btn"><i class="fa-li fa fa-book fa-fw"></i> 已读
+                    </li>
+                    <li eachurl="/api/article-list?type=all" class="all btn"><i class="fa-li fa fa-book fa-fw"></i> 全部文章
+                    </li>
+                    <li eachurl="/api/article-list?type=starred" class="starred btn"><i
+                            class="fa-li fa fa-book fa-fw"></i>
+                        星标
+                    </li>
+                </ul>
+
+                <hr>
+
+                <ul id="folders" class="fa-ul">
+                </ul>
+
+                <div class="nav-bottom">
+                    <i class="fa fa-arrow-up fa-2x nav-btn-up"></i>
+                    <i class="fa fa-arrow-down fa-2x nav-btn-down"></i>
+
+                </div>
+
             </div>
 
-            <div class="page-bottom">
-                <i class="fa fa-angle-double-down fa-3x end-btn"></i>
-                <i class="fa fa-angle-double-up fa-3x top-btn"></i>
+            <div id="page-wrapper">
+                <div id="page-content">
+                </div>
 
-                <i class="fa fa-arrow-up fa-3x page-btn-up"></i>
-                <i class="fa fa-arrow-down fa-3x page-btn-down"></i>
+                <div class="page-bottom">
+                    <i class="fa fa-angle-double-down fa-3x end-btn"></i>
+                    <i class="fa fa-angle-double-up fa-3x top-btn"></i>
+
+                    <i class="fa fa-arrow-up fa-3x page-btn-up"></i>
+                    <i class="fa fa-arrow-down fa-3x page-btn-down"></i>
+                    <i class="fa fa-arrow-right fa-3x next-btn article"></i>
+                </div>
             </div>
         </div>
+        <div id="qrcode-wrapper"><img id="qrcode"></img></div>
+
     </div>
-    <div id="qrcode-wrapper"><img id="qrcode"></img></div>
-
-
     <script src="static/custom.js"></script>
 </body>
 

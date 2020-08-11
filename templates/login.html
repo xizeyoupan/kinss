@@ -4,7 +4,7 @@
 {% block body %}
 
 <body>
-    <form action="{{ action }}" method="post" onsubmit='return checkUser()'>
+    <form action="{{ action }}" method="post">
         UesrName:
         <input type="text" name="name">
         <br>
@@ -14,19 +14,5 @@
         <button type='submit'>提交</button>
     </form>
 </body>
-
-<script src="https://cdn.bootcss.com/js-sha1/0.6.0/sha1.js"></script>
-<script type="text/javascript">
-    function checkUser() {
-        if ($("[name='name']").val() && $("[name='psd']").val()) {  //如果不为空
-            $("[name='psd']").val(sha1($("[name='psd']").val()));
-            $("[name='psd']").val(sha1($("[name='psd']").val()));   //2次哈希
-            return true
-        } else {
-            alert('不能为空！');
-            return false;
-        }
-    }
-</script>
 
 {% endblock %}

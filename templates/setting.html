@@ -6,13 +6,12 @@
 </head>
 
 <body>
-    <form action="/setting" method="post" enctype="multipart/form-data">
-        <p>
-            <input type="file" name="file">
-        </p>
+    <form action="/setting" method="post">
 
-        更新周期（秒）:
-        <input type="text" name="expires">
+        服务器网址（例：https://miniflux.example.org）:
+        <br>
+        <input type="text" name="baseurl" value="{{ url }}">
+        <br>
         <button type='submit'>提交</button>
     </form>
 
