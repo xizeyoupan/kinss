@@ -44,7 +44,8 @@ img.logo {
 }
 
 #navbtn {
-    margin-left: 2rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
 }
 
 
@@ -80,7 +81,8 @@ div.page-bottom {
 }
 
 div.page-bottom i{
-    padding-left: 2rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
 }
 
 #page-wrapper,
@@ -145,7 +147,7 @@ p.article-title {
 }
 
 #page-content>p {
-    font-size: 1.1rem;
+    font-size: 1.3rem;
     margin: 0.5rem;
     line-height: 150%;
 }
