@@ -4,51 +4,25 @@
     <div id="app-root" style="display: block;visibility: visible;">
         <div id="wrapper">
             <ul>
-                <i id="navbtn" class="fa fa-bars fa-rotate-90 fa-2x"></i>
-                <a><img class="logo" src="static/logo.png" /></a>
+                <a href="/article"><img class="logo" src="static/logo.png" /></a>
+                <a id="process"></a>
                 <div>
-                    <i class="fa fa-star-o fa-2x article star"></i>
-                    <!-- <i class="fa fa-star fa-2x"></i> -->
+                    <i class="fa fa-star fa-2x article star"></i>
+                    <!-- <i class="fa fa-star-o fa-2x"></i> -->
                     <i class="fa fa-square-o fa-2x article read"></i>
                     <!-- fa-check-square-o -->
                     <i class="fa fa-qrcode fa-2x article"></i>
-                    <i class="fa fa-refresh fa-2x"></i>
-                    <a href="/setting"><i class="fa fa-cogs fa-2x"></i></a>
+                    <!-- <i class="fa fa-refresh fa-2x"></i> -->
+                    <a href="/logout"><i class="fa fa-sign-out fa-2x"></i></a>
                 </div>
             </ul>
         </div>
 
         <div>
-            <div id="navbar">
-                <ul class="fa-ul category">
-                    <li eachurl="/api/article-list?type=unread" class="unread btn"><i
-                            class="fa-li fa fa-book fa-fw"></i> 未读
-                    </li>
-                    <li eachurl="/api/article-list?type=read" class="read btn"><i class="fa-li fa fa-book fa-fw"></i> 已读
-                    </li>
-                    <li eachurl="/api/article-list?type=all" class="all btn"><i class="fa-li fa fa-book fa-fw"></i> 全部文章
-                    </li>
-                    <li eachurl="/api/article-list?type=starred" class="starred btn"><i
-                            class="fa-li fa fa-book fa-fw"></i>
-                        星标
-                    </li>
-                </ul>
-
-                <hr>
-
-                <ul id="folders" class="fa-ul">
-                </ul>
-
-                <div class="nav-bottom">
-                    <i class="fa fa-arrow-up fa-2x nav-btn-up"></i>
-                    <i class="fa fa-arrow-down fa-2x nav-btn-down"></i>
-
-                </div>
-
-            </div>
 
             <div id="page-wrapper">
-                <div id="page-content">
+                <div id="page-content" status="main-page">
+                    <ul id="items"></ul>
                 </div>
 
                 <div class="page-bottom">

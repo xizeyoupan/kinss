@@ -1,33 +1,10 @@
+var since_id = "";
+var t; // check items' type when scroll at the end
+
 $(function () {
-    // 立刻刷新rss
-    $("i.fa-refresh").click(function () {
-        $.getJSON("/api/refresh", function (result) {
-            if (result['state'] === 'success') {
-                alert("正在抓取，请在几秒后刷新。");
-            };
-        });
-    });
-
-    // 监听每个feed的点击
-    $('#navbar').on('click', 'li', function () {
-        // 修改标题
-        $('title').html($(this).contents().filter(function (index, content) {
-            return content.nodeType === 3;
-        }).text());
-
-        show_article_list(this);
-        scroll_to_end($("#page-wrapper"), 'top');
-        // 删除文章操作按钮
-        $("i.article").css("display", "none");
-        // 阻止冒泡
-        if ($(this).attr('class').indexOf("each-feed") != -1) {
-            return false;
-        };
-    });
-
-    //监听每篇文章
+    // 监听每篇文章
     $('#page-content').on('click', 'li', function () {
-        show_article_content($(this).attr('entry_id'));
+        show_article_content($(this).attr('item_id'));
     });
 
     // 监听二维码按钮
@@ -35,13 +12,7 @@ $(function () {
         $("#qrcode-wrapper").toggle();
     });
 
-    //监听翻页按钮的点击
-    $('i.nav-btn-up').on('click', function () {
-        scroll_content($("#navbar"), 'up');
-    });
-    $('i.nav-btn-down').on('click', function () {
-        scroll_content($("#navbar"), 'down');
-    });
+    // 监听翻页按钮的点击
     $('i.page-btn-down').on('click', function () {
         scroll_content($("#page-wrapper"), 'down');
     });
@@ -60,85 +31,41 @@ $(function () {
 
     // 监听动作操作
     $("i.article.read,i.article.star").on('click', function () {
-        change_state(this);
+        change_status(this);
     });
 
-    $("#navbtn").click(function () {
-        $(this).toggleClass("fa-rotate-90");
-        $("#navbar").toggle();
+    // 监听页面滚动操作
+    $('#page-wrapper').on('scroll', function () {
+
+        var p = ($("#page-wrapper").height() + $("#page-wrapper").scrollTop()) / $("#page-wrapper")[0].scrollHeight
+        p = Number(p * 100).toFixed(1);
+        $("#process").text(p + "%")
+
+        if ($("#page-content").attr("status") === "article") {
+            return
+        }
+        if ($("#page-wrapper").height() + $("#page-wrapper").scrollTop() === $("#page-wrapper")[0].scrollHeight) {
+            var title = $('title').text().slice(0, 3)
+            var url = "/api/article-list?type=" + t + "&since_id=" + since_id;
+            addItems(url, title)
+        }
     });
 
     if (location.pathname === "/article") {
-        $.ajaxSettings.async = false;
-        $.getJSON("/api/get-categories", function (result) {
-            var html = "";
-            for (var i in result) {
-                html += '<li class="category" category_id="' + result[i]['id'] + '"> <i class="fa-li fa fa-folder-o fa-fw"></i>' + result[i]['title'] + '<ul class="fa-ul"></ul></li>';
-            };
-            $("#folders").html(html)
-        });
-
-        $.getJSON("/api/get-feeds", function (result) {
-            for (var i in result) {
-                var selector = "[category_id=" + result[i].category.id + "] ul";
-                var html = '<li class="each-feed" feed_id="' + result[i]['id'] + '"> <i class="fa-li fa fa-rss fa-fw"></i>' + result[i]['title'] + '</li>';
-                html += $(selector).html();
-                $(selector).html(html);
-            };
-        });
-
-        $.ajaxSettings.async = true;
-
-        $("li.unread.btn").click();
-    } else { };
-
+        $("i.article.star").click()
+    }
 });
 
 
-function show_article_list(obj) {
-    var flag = true;
-    if ($(obj).attr('class').indexOf("btn") != -1) { //上面四个大类
-        var url = $(obj).attr('eachurl')
-    } else if ($(obj).attr('class').indexOf("each-feed") != -1) { //每个Feed源
-        var url = "/api/article-list?type=each&feed_id=" + $(obj).attr('feed_id');
-    } else if ($(obj).attr('class').indexOf("category") != -1) { //分类
-        // 显示与隐藏feeds
-        if ($(obj).find(".each-feed").css("display") == "none") {
-            $(obj).find(".each-feed").css("display", "block")
-        } else {
-            $(obj).find(".each-feed").css("display", "none")
-        };
-        flag = false;
-        var url = "/api/article-list?type=category&category_id=" + $(obj).attr('category_id');
-    };
-
-    $.getJSON(url, function (result) {
-        if (result['state'] === 'success') {
-            var html = '<ul>';
-            for (var i in result["data"]["entries"]) {
-                var li = '<li entry_id="' + result["data"]["entries"][i]["id"] + '">\
-                <p class="feed-title">' + result["data"]["entries"][i]["feed"]["title"] + '</p>\
-                <p class="article-title">' + result["data"]["entries"][i]["title"] + '</p>\
-                </li>';
-                html += li;
-            }
-            html += "</ul>"
-            $("#page-content").html(html);
-        };
-    });
-
-    if (flag) {
-        $("#navbtn").click();
-    };
-}
-
-
 function show_article_content(id) {
-    var url = "/api/article?entry_id=" + id;
+    var url = "/api/article?item_id=" + id;
+    scroll_to_end($("#page-wrapper"), 'top');
+    $("#page-content").attr("status", "article")
+
     $.getJSON(url, function (result) {
         if (result['state'] === 'success') {
-            $("#page-content").html(result['data']['content']);
-            $("#page-content").attr("entry_id", result['data']['id']);
+            $("#page-content").html(result['data']['html']);
+            $("#page-content").attr("item_id", result['data']['id']);
             $('title').html(result['data']['title']);
 
             // 设置二维码
@@ -152,10 +79,7 @@ function show_article_content(id) {
                 $("i.article.read").click();
             }
 
-            $("i.article").css("display", "");
-        } else if (result['state'] === 'error') {
-            alert(result['info']);
-        };
+        }
     });
 }
 
@@ -177,41 +101,165 @@ function scroll_to_end(obj, direction) {
     };
 }
 
-function change_state(obj) {
-    var url = "/api/action?entry_id=" + $("#page-content").attr("entry_id");
+function change_status(obj) {
+    if ($("#page-content").attr("status") === "main-page") {
+        if ($(obj).hasClass("star")) {
 
-    if ($(obj).hasClass("star")) {
-        if ($(obj).hasClass("fa-star-o")) { //没加星的
-            url = url + "&action=is_star&type=1";
-        } else {
-            url = url + "&action=is_star&type=0";
-        }
-    } else if ($(obj).hasClass("read")) {
-        if ($(obj).hasClass("fa-square-o")) { //未读的
-            url = url + "&action=is_read&type=1";
-        } else {
-            url = url + "&action=is_read&type=0";
-        }
-    };
+            since_id = ''
+            $("#items").html('')
+            var title
 
-    $.getJSON(url, function (result) {
-        if (result['state'] === 'success') {
-            change_icon(result['data']);
+            if ($(obj).hasClass("fa-star-o")) { //没加星的，目标为星标
+                t = 'saved'
+                var url = "/api/article-list?type=saved&since_id=" + since_id;
+                $("i.article.star").removeClass("fa-star-o").addClass('fa-star');
+                title = "星标 ";
+            } else { //本来已加星的，目标为未读
+                t = 'unread'
+                var url = "/api/article-list?type=unread&since_id=" + since_id;
+                $("i.article.star").removeClass("fa-star").addClass('fa-star-o');
+                title = "未读 ";
+            }
+
+            addItems(url, title);
+
+        } else if ($(obj).hasClass("read")) {
+            var items = $("#items li")
+            var itemsNumber = items.length
+            var r = confirm("确定将这个页面中的" + itemsNumber + "个条目都设置为已读嘛？");
+            if (r) {
+                items = items.map(function (i) { return $(items[i]).attr("item_id") })
+                items = $.map(items, function (value, index) {
+                    return [value];
+                })
+
+                for (var i in items) {
+                    markItem(items[i], 'read')
+                }
+                setTimeout(function () {
+                    alert("Done!")
+                    location.reload()
+                }, 2000)
+
+            }
         };
-    });
+    } else if ($("#page-content").attr("status") === "article") {
+        var url = "/api/action?item_id=" + $("#page-content").attr("item_id") + "&type=";
+
+        if ($(obj).hasClass("star")) {
+            if ($(obj).hasClass("fa-star-o")) { //没加星的
+                url = url + "saved";
+            } else {
+                url = url + "unsaved";
+            }
+        } else if ($(obj).hasClass("read")) {
+            if ($(obj).hasClass("fa-square-o")) { //未读的
+                url = url + "read";
+            } else {
+                url = url + "unread";
+            }
+        }
+
+        $.getJSON(url, function (result) {
+            if (result['state'] === 'success') {
+                $.getJSON("/api/article?item_id=" + $("#page-content").attr("item_id"), function (res) {
+                    if (res['state'] === 'success') {
+                        change_icon(res['data']);
+                    }
+                })
+
+            };
+        })
+
+    }
 
 }
 
 function change_icon(data_obj) {
-    if (data_obj['starred']) {
+    if (data_obj['is_saved']) {
         $("i.article.star").removeClass("fa-star-o").addClass('fa-star');
     } else {
         $("i.article.star").removeClass("fa-star").addClass('fa-star-o');
     };
 
-    if (data_obj['status'] === "read") {
+    if (data_obj['is_read']) {
         $("i.article.read").removeClass("fa-square-o").addClass('fa-check-square-o');
     } else {
         $("i.article.read").removeClass("fa-check-square-o").addClass('fa-square-o');
     };
+}
+
+function addItems(url, title) {
+    if (since_id === null) {
+        return
+    }
+    $.getJSON(url, function (result) {
+        if (result['state'] === 'success') {
+            $('title').html(title + "(" + result.total + ")");
+            var html = '';
+            for (var i in result["items"]) {
+                var li = '<li item_id="' + result["items"][i]["id"] + '">\
+        <div class="feed-wrapper"><a class="feed-title">' + result["items"][i]["feed_title"] + '</a><a class="feed-date">\
+        '+ GetDateToNewData(result["items"][i]["created_on_time"]) + '</a></div>\
+        <p class="article-title">' + result["items"][i]["title"] + '</p>\
+        </li>';
+                html += li;
+            }
+            html += ""
+            $("#items").html($("#items").html() + html);
+            since_id = result.next_id
+        };
+    });
+}
+
+function markItem(id, type) {
+    var url = '/api/action?item_id=' + id + '&type=' + type
+    $.getJSON(url, function (result) {
+        if (result['state'] === 'success') {
+            return
+        };
+    });
+}
+
+function GetDateToNewData(diffValue) {
+    // from https://blog.csdn.net/wangkunjiao/article/details/103577995 ,BTW,there are some bugs in the page but I fixed.
+    diffValue = diffValue * 1000
+    var minute = 60000;
+    var hour = minute * 60;
+    var day = hour * 24;
+    var month = day * 30;
+
+    var nowTime = (new Date()).getTime(); //获取当前时间戳
+
+    var ShiJianCha = nowTime - diffValue;
+
+    var monthC = ShiJianCha / month;
+    var weekC = ShiJianCha / (7 * day);
+    var dayC = ShiJianCha / day;
+    var hourC = ShiJianCha / hour;
+    var minC = ShiJianCha / minute;
+    var res = '';
+
+    if (monthC >= 12) {
+        var date = new Date(diffValue);
+        res = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate();
+    } else if (monthC >= 1) {
+        res = parseInt(monthC) + "个月前";
+    }
+    else if (weekC >= 1) {
+        res = parseInt(weekC) + "周前"
+    }
+    else if (dayC >= 1) {
+        res = parseInt(dayC) + "天前"
+    }
+    else if (hourC >= 1) {
+        res = parseInt(hourC) + "个小时前"
+    }
+    else if (minC >= 1) {
+        res = parseInt(minC) + "分钟前"
+    } else {
+        res = "刚刚"
+    }
+    return res;
+
 }

@@ -6,7 +6,7 @@ body {
 * {
     margin: 0;
     padding: 0;
-    background-color: rgba(0, 0, 0, 0);
+    background-color: rgb(255,255,255);
 }
 
 html,
@@ -34,6 +34,13 @@ img.logo {
     margin-left: 2rem;
 }
 
+#process {
+    position: relative;
+    font-size: 2.0rem;
+    font-weight: 400;
+    margin-left: 2rem;
+}
+
 #wrapper ul div {
     float: right;
 }
@@ -43,63 +50,29 @@ img.logo {
     margin-top: 1rem;
 }
 
-#navbtn {
-    padding-left: 1.25rem;
-    padding-right: 1.25rem;
-}
-
-
-/* 侧边栏翻页按钮 */
-
-div.nav-bottom {
-    width: 15rem;
-    position: fixed;
-    bottom: 0;
-    text-align: center;
-    height: 2.5rem;
-    margin: 0.25rem;
-}
-
-div.nav-bottom i{
-    padding-left: 2rem;
-}
-
-/* 隐藏二级菜单 */
-.each-feed {
-    display: none;
-}
-
 /* 文章翻页按钮 */
 div.page-bottom {
     width: 100%;
     position: fixed;
     bottom: 0;
     text-align: center;
-    height: 2.5rem;
+    height: 3.25rem;
     margin: 0.25rem;
     padding-top: 0.5rem;
 }
 
 div.page-bottom i{
-    padding-left: 1.25rem;
-    padding-right: 1.25rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
 }
 
-#page-wrapper,
-#navbar {
+#page-wrapper {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
     top: 4.6rem;
-    bottom: 3rem;
+    bottom: 3.25rem;
     position: absolute;
-}
-
-#navbar {
-    width: 15rem;
-    padding-left: 1rem;
-    z-index: 999;
-    background-color: white;
 }
 
 #page-wrapper {
@@ -108,35 +81,34 @@ div.page-bottom i{
 
 
 /* 在谷歌浏览器中隐藏滚动条 */
-
 #page-wrapper::-webkit-scrollbar {
     width: 0 !important
 }
-
 #navbar::-webkit-scrollbar {
     width: 0 !important
 }
 
-
-/* 侧边栏字号、间距 */
-
-#navbar ul li {
-    margin-top: 0.25rem;
-    font-size: 1.4rem;
-    padding: 0.2rem;
-}
-
-p.feed-title {
-    padding: 0.2rem;
-    padding-top: 0.5rem;
+.feed-title {
+    font-size: 1.15rem;
     font-weight: 600;
 }
 
-p.article-title {
+.feed-date {
+    position: relative;
+    left: 1.2rem;
+    font-size: 1rem;
+    font-weight: 550;
+}
+
+.feed-wrapper {
+    padding: 0.2rem;
+    padding-top: 0.5rem;
+}
+
+.article-title {
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
     font-size: 1.3rem;
-    font-size: 500;
     border-bottom: grey;
     border-bottom-style: solid;
     border-width: 1px;

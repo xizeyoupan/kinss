@@ -8,20 +8,18 @@ from urllib.parse import urlparse
 
 import requests
 from flask import (Flask, jsonify, make_response, redirect, render_template,
-                   request, send_file)
-from flask_login import LoginManager, UserMixin, login_required, login_user
+                   request, send_file, url_for)
+from flask_login import (LoginManager, UserMixin, login_required, login_user,
+                         logout_user)
 from flask_restful import Api, Resource
 
 
-from utils import (extract_feed, get_client, get_config, get_qrcode_img,
-                   resize_img, set_config)
+from utils import (extract_feed, get_client, get_json_from_fever,
+                   get_qrcode_img, resize_img)
 
 
 clients_pool = []
-client = None
 currentPath = os.path.dirname(os.path.realpath(__file__))
-
-SERVER_URL = get_config(currentPath)
 
 
 class User(UserMixin):
@@ -32,72 +30,97 @@ class Article(Resource):
     decorators = [login_required]
 
     def get(self):
-        entry_id = request.args.get("entry_id")
-        if entry_id == 'next':
-            entries = client.get_entries(status='unread', direction='desc')
-            if not entries['entries']:  # 没有未读
-                return jsonify({"state": "error", "info": 'all entries have been read.'})
-            entry = entries['entries'][0]
+        item_id = request.args.get("item_id")
 
-        else:
-            entry = client.get_entry(int(entry_id))
+        if item_id == "next":
+            ids = get_json_from_fever(
+                client[0], client[1], '&unread_item_ids')
 
-        entry['content'] = extract_feed(entry['content'], entry['url'])
-        return jsonify({"state": "success", "data": entry})
+            ids = ids['unread_item_ids'].split(",")
+            ids = list(filter(lambda x: x, ids))
+            total = len(ids)
+
+            if total:
+                item_id = ids[0]
+            else:
+                return jsonify({"state": "error", "data": 'empty'})
+
+        items = get_json_from_fever(
+            client[0], client[1], '&items&with_ids=' + item_id)['items'][0]
+        items['html'] = extract_feed(items['html'], items['url'])
+        return jsonify({"state": "success", "data": items})
 
 
 class ArticleList(Resource):
     decorators = [login_required]
 
     def get(self):
-        r_type = request.args.get("type")
-        kwargs = {'order': 'published_at', 'direction': 'desc', 'limit': 1000}
-        if r_type == 'each':
-            feed_id = request.args.get("feed_id")
-            entries = client.get_feed_entries(feed_id, **kwargs)
-        elif r_type == 'category':
-            category_id = request.args.get("category_id")
-            entries = client.get_entries(**kwargs)
-            entries = {'entries': [i for i in entries['entries']
-                                   if i['feed']['category']['id'] == int(category_id)]}
-            entries['total'] = len(entries['entries'])
-        elif r_type == 'read':
-            entries = client.get_entries(**kwargs, status='read')
-        elif r_type == 'unread':
-            entries = client.get_entries(**kwargs, status='unread')
-        elif r_type == 'all':
-            entries = client.get_entries(**kwargs)
-        elif r_type == 'starred':
-            entries = client.get_entries(**kwargs, starred=True)
+        type = request.args.get("type")  # unread,saved
+        since_id = request.args.get("since_id")
 
-        for i in entries['entries']:  # 删除文章内容
-            i.pop('content')
-        return jsonify({"state": "success", "data": entries})
+        ids = get_json_from_fever(
+            client[0], client[1], '&{}_item_ids'.format(type))
+
+        ids = ids['{}_item_ids'.format(type)].split(",")
+        ids = list(filter(lambda x: x, ids))
+        total = len(ids)
+
+        if not total:
+            return jsonify({"state": "success", 'total': total, 'next_id': None})
+
+        ids = list(map(lambda x: int(x), ids))
+        ids.sort()
+        ids = list(map(lambda x: str(x), ids))
+
+        if since_id:
+            ids = ids[ids.index(since_id):]
+
+        next_id = ids[0:50][-1]
+        if next_id == ids[-1]:
+            next_id = None
+        else:
+            next_id = ids[50]
+            ids = ids[0:50]
+
+        feeds = get_json_from_fever(client[0], client[1], "&feeds")['feeds']
+        temp = get_json_from_fever(client[0], client[1], "&groups")
+        feeds_groups = temp['feeds_groups']
+        groups = temp['groups']
+
+        items = get_json_from_fever(
+            client[0], client[1], '&items&with_ids=' + ','.join(ids))['items']
+
+        for i in items:
+            del i['html']
+
+            for j in feeds:
+                if i['feed_id'] == j['id']:
+                    i['feed_title'] = j['title']
+                    break
+
+            for k in feeds_groups:
+                if str(i['feed_id']) in k['feed_ids'].split(","):
+                    i['group_id'] = k['group_id']
+                    break
+
+            for j in groups:
+                if i['group_id'] == j['id']:
+                    i['group_title'] = j['title']
+                    break
+
+        return jsonify({"state": "success", "items": items, 'total': total, 'next_id': next_id})
 
 
 class Action(Resource):
     decorators = [login_required]
 
     def get(self):
-        entry_id = request.args.get("entry_id")
-        action = request.args.get("action")
-        r_type = request.args.get("type")
-        if action == 'is_read':
-            r_type = 'read' if r_type == '1' else 'unread'
-            client.update_entries([int(entry_id), ], r_type)
-        elif action == 'is_star':
-            client.toggle_bookmark(int(entry_id))
-
-        entry = client.get_entry(int(entry_id))
-        return jsonify({"state": "success", 'data': entry})
-
-
-class Refresh(Resource):
-    decorators = [login_required]
-
-    def get(self):
-        client.refresh_all_feeds()
-        return jsonify({"state": "success", "info": 'Refreshing.'})
+        item_id = request.args.get("item_id")
+        type = request.args.get("type")
+        result = get_json_from_fever(
+            client[0], client[1], '&mark=item&as={}&id={}'.format(type, item_id))
+        if result['auth']:
+            return jsonify({"state": "success"})
 
 
 class GetImg(Resource):
@@ -114,8 +137,9 @@ class GetImg(Resource):
                 res = make_response(r.content)
                 res.headers['Content-Type'] = r.headers['Content-Type']
                 return res
-            raw = resize_img(io.BytesIO(r.content))
-            return send_file(raw, mimetype='image/jpeg')
+            else:
+                raw = resize_img(io.BytesIO(r.content))
+                return send_file(raw, mimetype='image/jpeg')
         else:
             r.raise_for_status()
 
@@ -129,22 +153,8 @@ class GetQrCode(Resource):
         return send_file(img, mimetype='image/jpeg')
 
 
-class GetCategories(Resource):
-    decorators = [login_required]
-
-    def get(self):
-        return client.get_categories()
-
-
-class GetFeeds(Resource):
-    decorators = [login_required]
-
-    def get(self):
-        return client.get_feeds()
-
-
 app = Flask(__name__)
-app.secret_key = 'whatIsSecret_key?'
+app.secret_key = os.urandom(16)
 api = Api(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -154,14 +164,11 @@ login_manager.login_message_category = "info"
 api.add_resource(Article, '/api/article')
 api.add_resource(ArticleList, '/api/article-list')
 api.add_resource(Action, '/api/action')
-api.add_resource(Refresh, '/api/refresh')
 api.add_resource(GetImg, '/api/get-img')
 api.add_resource(GetQrCode, '/api/get-qrcode')
-api.add_resource(GetCategories, '/api/get-categories')
-api.add_resource(GetFeeds, '/api/get-feeds')
 
 
-@login_manager.user_loader
+@ login_manager.user_loader
 def load_user(username):
     global client
     curr_user = User()
@@ -169,71 +176,63 @@ def load_user(username):
     for i in clients_pool:
         if i['id'] == username:
             client = i['client']
+            break
     return curr_user
 
 
-@app.route('/')
+@ app.route('/')
 def index():
-    return '<a href=/login>login</a><hr><a href=/setting>setting</a>'
+    return '<a href=/login>login</a><hr><a href=/article>read</a>'
 
 
-@app.route('/article')
-@login_required
+@ app.route('/article')
+@ login_required
 def get_read_page():
     return render_template('article.html')
 
 
-@app.route('/login', methods=['GET', 'POST'])
+@ app.route('/login', methods=['GET', 'POST'])
 def login():
     global client, SERVER_URL
 
     if request.method == 'GET':
-        url = get_config(currentPath)
-        if not url:
-            return 'Set SERVER_URL first!<a href=/setting>setting</a>'
-        SERVER_URL = url
         return render_template('login.html', title='login', action='/login')
 
     if request.method == 'POST':
         name = request.form['name']
         psd = request.form['psd']
-        if not all([name, psd]):
+        endpoint = request.form['endpoint']
+        if not all([name, psd, endpoint]):
             return make_response("invalid param", 400)
 
         try:
-            client = get_client(SERVER_URL, name, psd)
+            client = get_client(endpoint, name, psd)
         except Exception as e:
             print(e)
             return jsonify(error='error')
 
         curr_user = User()
-        curr_user.id = name
+        curr_user.id = name + endpoint
         login_user(curr_user)
-        r_next = request.args.get('next')
         flag = True
         for i in clients_pool:
-            if i['id'] == name:
+            if i['id'] == curr_user.id:
                 flag = False
+                break
         if flag:
-            clients_pool.append({'id': name, 'client': client})
-        return redirect(r_next or '/article')
+            clients_pool.append({'id': curr_user.id, 'client': client})
+        return redirect('/article')
 
 
-@app.route('/setting', methods=['GET', 'POST'])
-def setting():
-    global SERVER_URL
-    if request.method == 'GET':
-        return render_template('setting.html', title='设置', url=get_config(currentPath))
-
-    if request.method == 'POST':
-        baseurl = request.form['baseurl']
-
-        if baseurl:
-            set_config(currentPath, baseurl)
-            SERVER_URL = baseurl
-            return 'Update successfully.click <a href=/login>here</a> to login.'
-        else:
-            return make_response("invalid param", 400)
+@app.route('/logout')
+@login_required
+def logout():
+    for i in clients_pool:
+        if i['client'] == client:
+            del clients_pool[clients_pool.index(i)]
+            break
+    logout_user()
+    return redirect(url_for('login'))
 
 
 if __name__ == "__main__":

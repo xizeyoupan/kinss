@@ -1,9 +1,10 @@
+import hashlib
 import io
 import re
 from urllib import parse
 
-import miniflux
 import qrcode
+import requests
 from bs4 import BeautifulSoup
 from PIL import Image
 
@@ -55,26 +56,18 @@ def parse_url_path(s):
     return parse.quote(s, safe=";/?:@&=+$,%")
 
 
-def get_config(path: str):
-    path = path + '/config'
-    with open(path, 'a+', encoding='utf8') as f:
-        f.seek(0)
-        return f.read()
-
-
-def get_client(server_url, username, password):
-    client = miniflux.Client(server_url, username, password)
+def get_client(endpoint, username, password) -> list:
+    hash = hashlib.md5('{}:{}'.format(username, password).encode('utf8'))
+    hash = hash.hexdigest()
+    params = {'api_key': hash}
     try:
-        client.me()
-        return client
+        r = requests.post(endpoint, params=params)
+        if r.status_code == requests.codes.OK:
+            if r.json()['auth'] == 1:
+                return [endpoint, params]
+        raise Exception("status_code:{}".format(r.status_code))
     except Exception as e:
         raise e
-
-
-def set_config(path, url):
-    path = path + '/config'
-    with open(path, 'w', encoding='utf8') as f:
-        f.write(url)
 
 
 def resize_img(raw):
@@ -92,3 +85,8 @@ def resize_img(raw):
     im.save(output, 'JPEG', quality=90)
     output.seek(0, 0)
     return output
+
+
+def get_json_from_fever(endpoint: str, params: dict, api: str):
+    r = requests.post(endpoint + '?api' + api, params=params)
+    return r.json()
