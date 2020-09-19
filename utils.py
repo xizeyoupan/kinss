@@ -59,12 +59,12 @@ def parse_url_path(s):
 def get_client(endpoint, username, password) -> list:
     hash = hashlib.md5('{}:{}'.format(username, password).encode('utf8'))
     hash = hash.hexdigest()
-    params = {'api_key': hash}
+    data = {'api_key': hash}
     try:
-        r = requests.post(endpoint, params=params)
+        r = requests.post(endpoint, data=data)
         if r.status_code == requests.codes.OK:
             if r.json()['auth'] == 1:
-                return [endpoint, params]
+                return [endpoint, data]
         raise Exception("status_code:{}".format(r.status_code))
     except Exception as e:
         raise e
@@ -87,6 +87,6 @@ def resize_img(raw):
     return output
 
 
-def get_json_from_fever(endpoint: str, params: dict, api: str):
-    r = requests.post(endpoint + '?api' + api, params=params)
+def get_json_from_fever(endpoint: str, data: dict, api: str):
+    r = requests.post(endpoint + '?api' + api, data=data)
     return r.json()

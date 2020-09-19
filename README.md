@@ -6,23 +6,48 @@ Kinss is a minimalist feed reader for kindle.
 ## Quickstart
 1. `pip install -r requirements.txt`
 2. 运行`app.py`，默认 ip 是 `0.0.0.0` & 端口 `5000`。
-3. 此程序依赖于[miniflux](https://github.com/miniflux/miniflux)，请先根据[手册](https://miniflux.app/docs/installation.html)完成安装并配置好信息后使用。访问网页后，进入设置页面设置miniflux服务器地址，在登录页面输入您的miniflux用户名和密码。
-4. 体验地址：[kinss](http://kindle.2333332.xyz)，除了设置，其他都可用。用户名为`kinss`,密码为`kinsses`。当然，由于网络问题，反应**会很慢**。建议自建。
+
+## Docker 部署
+### 安装
+运行下面的命令下载 kinss 镜像
+
+`$ docker pull intemd/kinss`
+
+然后运行 kinss 即可
+
+`$ docker run -d --name kinss -p 5000:5000 intemd/kinss`
+
+在浏览器中打开 http://0.0.0.0.1:5000/ ，enjoy it! ✅
+
+您可以使用下面的命令来关闭 kinss
+
+`$ docker stop kinss`
+### 更新
+删除旧容器
+
+`$ docker stop kinss`
+
+`$ docker rm kinss`
+
+然后重复安装步骤
+
+## Aggregator
+此程序依赖**feverapi**，任何集成了此api的服务理论上都能运行。以下是几个大佬提供的公开服务，我稍微进行了测试。体验地址：[kinss](http://kindle.2333332.xyz)，当然，由于网络线路，反应**会比较慢**。建议自建。
+
+|Aggregator|Fever UesrName|Fever Password|Fever API endpoint|thanks to|
+|  ----  | ----  |--------|  ----  | ----  |
+|FreshRSS|kinss|kinsses|https://rss.othing.xyz/p/api/fever.php|@yzqzss|
+|Tiny Tiny RSS|kinss|kinsses|https://rss.ioiox.com/plugins/fever/|@stilleshan|
 
 ## Features
 - [x] 已读/未读
 - [x] 星标
 - [x] 二维码
-- [x] 分类
-- [ ] UI美化
-- [ ] 原文
-
+- [x] 多账户
 
 ## Read On KPW3
 ![](assets/1.png)
 ![](assets/2.png)
-![](assets/3.png)
-![](assets/4.png)
 ![](assets/5.png)
 
 ## License

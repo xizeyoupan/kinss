@@ -133,13 +133,7 @@ function change_status(obj) {
                     return [value];
                 })
 
-                for (var i in items) {
-                    markItem(items[i], 'read')
-                }
-                setTimeout(function () {
-                    alert("Done!")
-                    location.reload()
-                }, 2000)
+                markItems(items, 'read')
 
             }
         };
@@ -212,13 +206,15 @@ function addItems(url, title) {
     });
 }
 
-function markItem(id, type) {
-    var url = '/api/action?item_id=' + id + '&type=' + type
-    $.getJSON(url, function (result) {
-        if (result['state'] === 'success') {
-            return
-        };
-    });
+function markItems(idArray, type) {
+    idArray = idArray.map(function (i) {
+        var url = '/api/action?item_id=' + i + '&type=' + type;
+        return $.getJSON(url, function (result) {
+            if (result['state'] === 'success') { return };
+        });
+    })
+
+    $.when.apply($, idArray).then(function () { location.reload() })
 }
 
 function GetDateToNewData(diffValue) {
