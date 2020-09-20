@@ -17,7 +17,7 @@ Kinss is a minimalist feed reader for kindle.
 
 `$ docker run -d --name kinss -p 5000:5000 intemd/kinss`
 
-在浏览器中打开 http://0.0.0.0.1:5000/ ，enjoy it! ✅
+在浏览器中打开 http://0.0.0.0:5000/ ，enjoy it! ✅
 
 您可以使用下面的命令来关闭 kinss
 
