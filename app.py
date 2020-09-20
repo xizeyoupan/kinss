@@ -4,6 +4,7 @@ monkey.patch_all()
 
 import io
 import os
+from datetime import timedelta
 from urllib.parse import urlparse
 
 import requests
@@ -209,11 +210,11 @@ def login():
             client = get_client(endpoint, name, psd)
         except Exception as e:
             print(e)
-            return jsonify(error='error')
+            return jsonify(error=str(e))
 
         curr_user = User()
         curr_user.id = name + endpoint
-        login_user(curr_user)
+        login_user(curr_user, remember=True, duration=timedelta(weeks=1))
         flag = True
         for i in clients_pool:
             if i['id'] == curr_user.id:
@@ -227,10 +228,6 @@ def login():
 @app.route('/logout')
 @login_required
 def logout():
-    for i in clients_pool:
-        if i['client'] == client:
-            del clients_pool[clients_pool.index(i)]
-            break
     logout_user()
     return redirect(url_for('login'))
 
