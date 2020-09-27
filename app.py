@@ -234,6 +234,9 @@ def logout():
 
 if __name__ == "__main__":
     # app.debug = True
-    http_server = WSGIServer(('0.0.0.0', 5000), app)
+    port = os.environ.get('PORT') or 5000
+    port = int(port)
+    http_server = WSGIServer(('0.0.0.0', port), app)
+    print('http://0.0.0.0:{}'.format(port))
     http_server.serve_forever()
     # app.run('0.0.0.0', debug=True)

@@ -1,0 +1,13 @@
+{
+    "name": "Kinss",
+    "description": "Kinss",
+    "repository": "https://github.com/xizeyoupan/kinss",
+    "website": "http://kindle.2333332.xyz",
+    "logo": "https://i.loli.net/2020/03/06/Q8dyDxz63OKbZml.png",
+    "env": {
+        "PORT": {
+            "value": "80",
+            "required": false
+        }
+    }
+}
