@@ -32,7 +32,7 @@ Kinss is a minimalist feed reader for kindle.
 然后重复安装步骤
 
 ## Aggregator
-此程序依赖**feverapi**，任何集成了此api的服务理论上都能运行。以下是几个大佬提供的公开服务，我稍微进行了测试。体验地址：[kinss](http://kindle.2333332.xyz)，当然，由于网络线路，反应**会比较慢**。建议自建。
+此程序依赖**feverapi**，任何集成了此api的服务理论上都能运行。以下是几个大佬提供的公开服务，我稍微进行了测试。体验地址：[kinss](https://kinss.herokuapp.com)，当然，由于网络线路，反应**会比较慢**。建议自建。
 
 |Aggregator|Fever UesrName|Fever Password|Fever API endpoint|thanks to|
 |  ----  | ----  |--------|  ----  | ----  |
