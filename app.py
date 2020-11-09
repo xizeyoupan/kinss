@@ -197,7 +197,11 @@ def login():
     global client, SERVER_URL
 
     if request.method == 'GET':
-        return render_template('login.html', title='login', action='/login')
+        name = request.args.get('name')
+        psd = request.args.get('psd')
+        endpoint = request.args.get('endpoint')
+        if not all([name, psd, endpoint]):
+            return render_template('login.html', title='login', action='/login')
 
     if request.method == 'POST':
         name = request.form['name']
@@ -206,23 +210,23 @@ def login():
         if not all([name, psd, endpoint]):
             return make_response("invalid param", 400)
 
-        try:
-            client = get_client(endpoint, name, psd)
-        except Exception as e:
-            print(e)
-            return jsonify(error=str(e))
+    try:
+        client = get_client(endpoint, name, psd)
+    except Exception as e:
+        print(e)
+        return jsonify(error=str(e))
 
-        curr_user = User()
-        curr_user.id = name + endpoint
-        login_user(curr_user, remember=True, duration=timedelta(weeks=1))
-        flag = True
-        for i in clients_pool:
-            if i['id'] == curr_user.id:
-                flag = False
-                break
-        if flag:
-            clients_pool.append({'id': curr_user.id, 'client': client})
-        return redirect('/article')
+    curr_user = User()
+    curr_user.id = name + endpoint
+    login_user(curr_user, remember=True, duration=timedelta(weeks=1))
+    flag = True
+    for i in clients_pool:
+        if i['id'] == curr_user.id:
+            flag = False
+            break
+    if flag:
+        clients_pool.append({'id': curr_user.id, 'client': client})
+    return redirect('/article')
 
 
 @app.route('/logout')

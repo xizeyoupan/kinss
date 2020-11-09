@@ -39,6 +39,14 @@ Kinss is a minimalist feed reader for kindle.
 |FreshRSS|kinss|kinsses|https://rss.othing.xyz/p/api/fever.php|@yzqzss|
 |Tiny Tiny RSS|kinss|kinsses|https://rss.ioiox.com/plugins/fever/|@stilleshan|
 
+### 通过Get方式登录
+现已支持通过Get请求的方式进行登录（即通过访问如https://domain/login?name=FeverUsername&psd=FeverPassword&endpoint=FeverAPIendpoint 的链接的形式直接登录），该方式对咪咕版Kindle等设备更为友好。
+
+***实际使用中请将等号后的参数替换为自己的参数使用。***
+
+
+**由于Get请求的安全性较Post方式弱，使用该方式登录时请妥善保管好登录链接，不要外泄。**
+
 ## Features
 - [x] 已读/未读
 - [x] 星标
