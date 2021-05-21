@@ -36,7 +36,7 @@ Kinss is a minimalist feed reader for kindle.
 
 |Aggregator|Fever UesrName|Fever Password|Fever API endpoint|thanks to|
 |  ----  | ----  |--------|  ----  | ----  |
-|FreshRSS|kinss|kinsses|https://rss.othing.xyz/p/api/fever.php|@yzqzss|
+|FreshRSS|kinss|kinsses|https://rss.othing.xyz/api/fever.php|@yzqzss|
 |Tiny Tiny RSS|kinss|kinsses|https://rss.ioiox.com/plugins/fever/|@stilleshan|
 
 ### 通过Get方式登录
