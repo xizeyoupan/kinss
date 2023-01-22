@@ -5,5 +5,5 @@ qrcode==6.1
 Flask_RESTful==0.3.8
 beautifulsoup4==4.9.1
 lxml==4.9.1
-Pillow==8.2.0
+Pillow==9.3.0
 requests==2.22.0
