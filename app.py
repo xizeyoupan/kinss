@@ -169,7 +169,7 @@ api.add_resource(GetImg, '/api/get-img')
 api.add_resource(GetQrCode, '/api/get-qrcode')
 
 
-@ login_manager.user_loader
+@login_manager.user_loader
 def load_user(username):
     global client
     curr_user = User()
@@ -181,18 +181,18 @@ def load_user(username):
     return curr_user
 
 
-@ app.route('/')
+@app.route('/')
 def index():
     return '<a href=/login>login</a><hr><a href=/article>read</a>'
 
 
-@ app.route('/article')
-@ login_required
+@app.route('/article')
+@login_required
 def get_read_page():
     return render_template('article.html')
 
 
-@ app.route('/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     global client, SERVER_URL
 

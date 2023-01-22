@@ -1,10 +1,8 @@
-FROM python:3.8
+FROM python:3.8.16
 
 RUN mkdir /code
 COPY . /code 
-RUN pip install -r /code/requirements.txt 
-# -i https://pypi.tuna.tsinghua.edu.cn/simple
-RUN pip install -U --force-reinstall --no-binary :all: gevent
+RUN pip install -r /code/requirements.txt
 WORKDIR /code
 
 CMD ["python", "/code/app.py"]
