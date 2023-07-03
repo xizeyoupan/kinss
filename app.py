@@ -183,7 +183,7 @@ def load_user(username):
 
 @app.route('/')
 def index():
-    return '<a href=/login>login</a><hr><a href=/article>read</a>'
+    return '<a href="/login">login</a><hr><a href="/article">read</a>'
 
 
 @app.route('/article')
